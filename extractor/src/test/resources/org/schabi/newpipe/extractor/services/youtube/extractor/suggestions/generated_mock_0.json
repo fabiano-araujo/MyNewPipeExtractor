@@ -1,0 +1,53 @@
+{
+  "request": {
+    "httpMethod": "GET",
+    "url": "https://suggestqueries.google.com/complete/search?client\u003dyoutube\u0026jsonp\u003dJP\u0026ds\u003dyt\u0026gl\u003dDE\u0026q\u003dhello",
+    "headers": {
+      "Accept-Language": [
+        "en-GB, en;q\u003d0.9"
+      ],
+      "Cookie": [
+        "CONSENT\u003dPENDING+385"
+      ]
+    },
+    "localization": {
+      "languageCode": "en",
+      "countryCode": "GB"
+    }
+  },
+  "response": {
+    "responseCode": 200,
+    "responseMessage": "",
+    "responseHeaders": {
+      "alt-svc": [
+        "h3\u003d\":443\"; ma\u003d2592000,h3-29\u003d\":443\"; ma\u003d2592000,h3-Q050\u003d\":443\"; ma\u003d2592000,h3-Q046\u003d\":443\"; ma\u003d2592000,h3-Q043\u003d\":443\"; ma\u003d2592000,quic\u003d\":443\"; ma\u003d2592000; v\u003d\"46,43\""
+      ],
+      "cache-control": [
+        "private, max-age\u003d3600"
+      ],
+      "content-disposition": [
+        "attachment; filename\u003d\"f.txt\""
+      ],
+      "content-type": [
+        "text/javascript; charset\u003dUTF-8"
+      ],
+      "date": [
+        "Tue, 15 Mar 2022 17:06:47 GMT"
+      ],
+      "expires": [
+        "Tue, 15 Mar 2022 17:06:47 GMT"
+      ],
+      "server": [
+        "gws"
+      ],
+      "x-frame-options": [
+        "SAMEORIGIN"
+      ],
+      "x-xss-protection": [
+        "0"
+      ]
+    },
+    "responseBody": "JP([\"hello\",[[\"hello\",0,[512,433]],[\"hello song\",0,[512,433,131]],[\"hello kitty\",0,[512,433,131]],[\"hello adele\",0,[512,433]],[\"hello neighbor\",0,[512,433,131]],[\"hello hello\",0,[512,433,131]],[\"hello darkness my old friend\",0,[512,433]],[\"hello my name is zuzie\",0,[512,433,131]],[\"hello the sharpshooter ep 1 eng sub\",0,[433,131]],[\"hello pop smoke\",0,[512,433,131]],[\"hello neighbour\",0,[512,433,131]],[\"hello there\",0,[512,433,131]],[\"hello moto ringtone\",0,[433,131]],[\"hello lionel richie\",0,[512,433,131]]],{\"k\":1,\"q\":\"koHZPkd0O4QWeuMcBjl_h8ufakE\"}])",
+    "latestUrl": "https://suggestqueries.google.com/complete/search?client\u003dyoutube\u0026jsonp\u003dJP\u0026ds\u003dyt\u0026gl\u003dDE\u0026q\u003dhello"
+  }
+}
