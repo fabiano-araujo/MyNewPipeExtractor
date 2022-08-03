@@ -738,16 +738,16 @@ public class YoutubeStreamExtractor extends StreamExtractor {
     // Fetch page
     //////////////////////////////////////////////////////////////////////////*/
 
-    private static final String FORMATS = "formats";
-    private static final String ADAPTIVE_FORMATS = "adaptiveFormats";
-    private static final String DEOBFUSCATION_FUNC_NAME = "deobfuscate";
-    private static final String STREAMING_DATA = "streamingData";
-    private static final String PLAYER = "player";
-    private static final String NEXT = "next";
-    private static final String SIGNATURE_CIPHER = "signatureCipher";
-    private static final String CIPHER = "cipher";
+    public static final String FORMATS = "formats";
+    public static final String ADAPTIVE_FORMATS = "adaptiveFormats";
+    public static final String DEOBFUSCATION_FUNC_NAME = "deobfuscate";
+    public static final String STREAMING_DATA = "streamingData";
+    public static final String PLAYER = "player";
+    public static final String NEXT = "next";
+    public static final String SIGNATURE_CIPHER = "signatureCipher";
+    public static final String CIPHER = "cipher";
 
-    private static final String[] REGEXES = {
+    public static final String[] REGEXES = {
             "(?:\\b|[^a-zA-Z0-9$])([a-zA-Z0-9$]{2,})\\s*=\\s*function\\(\\s*a\\s*\\)"
                     + "\\s*\\{\\s*a\\s*=\\s*a\\.split\\(\\s*\"\"\\s*\\)",
             "\\bm=([a-zA-Z0-9$]{2,})\\(decodeURIComponent\\(h\\.s\\)\\)",
@@ -756,7 +756,7 @@ public class YoutubeStreamExtractor extends StreamExtractor {
             "\\b([\\w$]{2,})\\s*=\\s*function\\((\\w+)\\)\\{\\s*\\2=\\s*\\2\\.split\\(\"\"\\)\\s*;",
             "\\bc\\s*&&\\s*d\\.set\\([^,]+\\s*,\\s*(:encodeURIComponent\\s*\\()([a-zA-Z0-9$]+)\\("
     };
-    private static final String STS_REGEX = "signatureTimestamp[=:](\\d+)";
+    public static final String STS_REGEX = "signatureTimestamp[=:](\\d+)";
 
     @Override
     public void onFetchPage(@Nonnull final Downloader downloader)
