@@ -823,7 +823,6 @@ public class YoutubeStreamExtractor extends StreamExtractor {
                         .value(RACY_CHECK_OK, true)
                         .done())
                 .getBytes(StandardCharsets.UTF_8);
-        nextResponse = getJsonPostResponse(NEXT, body, localization);
         if (userNextResponse){
             nextResponse = getJsonPostResponse(NEXT, body, localization);
         }
