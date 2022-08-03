@@ -35,8 +35,8 @@ import java.util.regex.Pattern;
  */
 public class YoutubeThrottlingDecrypter {
 
-    public static final Pattern N_PARAM_PATTERN = Pattern.compile("[&?]n=([^&]+)");
-    public static final Pattern FUNCTION_NAME_PATTERN = Pattern.compile(
+    public static Pattern N_PARAM_PATTERN = Pattern.compile("[&?]n=([^&]+)");
+    public static Pattern FUNCTION_NAME_PATTERN = Pattern.compile(
             "\\.get\\(\"n\"\\)\\)&&\\(b=([a-zA-Z0-9$]+)(?:\\[(\\d+)])?\\([a-zA-Z0-9]\\)");
 
     private static final Map<String, String> N_PARAMS_CACHE = new HashMap<>();

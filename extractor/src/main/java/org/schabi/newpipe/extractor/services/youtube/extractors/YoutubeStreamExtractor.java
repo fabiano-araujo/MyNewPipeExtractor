@@ -738,16 +738,16 @@ public class YoutubeStreamExtractor extends StreamExtractor {
     // Fetch page
     //////////////////////////////////////////////////////////////////////////*/
 
-    public static final String FORMATS = "formats";
-    public static final String ADAPTIVE_FORMATS = "adaptiveFormats";
-    public static final String DEOBFUSCATION_FUNC_NAME = "deobfuscate";
-    public static final String STREAMING_DATA = "streamingData";
-    public static final String PLAYER = "player";
-    public static final String NEXT = "next";
-    public static final String SIGNATURE_CIPHER = "signatureCipher";
-    public static final String CIPHER = "cipher";
+    public static String FORMATS = "formats";
+    public static String ADAPTIVE_FORMATS = "adaptiveFormats";
+    public static String DEOBFUSCATION_FUNC_NAME = "deobfuscate";
+    public static String STREAMING_DATA = "streamingData";
+    public static String PLAYER = "player";
+    public static String NEXT = "next";
+    public static String SIGNATURE_CIPHER = "signatureCipher";
+    public static String CIPHER = "cipher";
 
-    public static final String[] REGEXES = {
+    public static String[] REGEXES = {
             "(?:\\b|[^a-zA-Z0-9$])([a-zA-Z0-9$]{2,})\\s*=\\s*function\\(\\s*a\\s*\\)"
                     + "\\s*\\{\\s*a\\s*=\\s*a\\.split\\(\\s*\"\"\\s*\\)",
             "\\bm=([a-zA-Z0-9$]{2,})\\(decodeURIComponent\\(h\\.s\\)\\)",
@@ -756,8 +756,9 @@ public class YoutubeStreamExtractor extends StreamExtractor {
             "\\b([\\w$]{2,})\\s*=\\s*function\\((\\w+)\\)\\{\\s*\\2=\\s*\\2\\.split\\(\"\"\\)\\s*;",
             "\\bc\\s*&&\\s*d\\.set\\([^,]+\\s*,\\s*(:encodeURIComponent\\s*\\()([a-zA-Z0-9$]+)\\("
     };
-    public static final String STS_REGEX = "signatureTimestamp[=:](\\d+)";
+    public static String STS_REGEX = "signatureTimestamp[=:](\\d+)";
 
+    public static boolean userNextResponse = false;
     @Override
     public void onFetchPage(@Nonnull final Downloader downloader)
             throws IOException, ExtractionException {
@@ -823,7 +824,9 @@ public class YoutubeStreamExtractor extends StreamExtractor {
                         .done())
                 .getBytes(StandardCharsets.UTF_8);
         nextResponse = getJsonPostResponse(NEXT, body, localization);
-
+        if (userNextResponse){
+            nextResponse = getJsonPostResponse(NEXT, body, localization);
+        }
         // streamType can only have LIVE_STREAM, POST_LIVE_STREAM and VIDEO_STREAM values (see
         // setStreamType()), so this block will be run only for POST_LIVE_STREAM and VIDEO_STREAM
         // values if fetching of the ANDROID client is not forced
