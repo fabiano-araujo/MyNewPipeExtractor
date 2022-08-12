@@ -602,15 +602,21 @@ public class YoutubeStreamExtractor extends StreamExtractor {
     }
 
     /**
-     * Try to decrypt url and fallback to given url, because decryption is not
-     * always needed.
+     * Try to decrypt a streaming URL and fallback to the given URL, because decryption may fail if
+     * YouTube do breaking changes.
+     *
+     * <p>
      * This way a breaking change from YouTube does not result in a broken extractor.
+     * </p>
+     *
+     * @param streamingUrl the streaming URL to decrypt with {@link YoutubeThrottlingDecrypter}
+     * @param videoId      the video ID to use when extracting JavaScript player code, if needed
      */
-    private String tryDecryptUrl(final String url, final String videoId) {
+    private String tryDecryptUrl(final String streamingUrl, final String videoId) {
         try {
-            return YoutubeThrottlingDecrypter.apply(url, videoId);
+            return YoutubeThrottlingDecrypter.apply(streamingUrl, videoId);
         } catch (final ParsingException e) {
-            return url;
+            return streamingUrl;
         }
     }
 
@@ -756,7 +762,7 @@ public class YoutubeStreamExtractor extends StreamExtractor {
             "\\b([\\w$]{2,})\\s*=\\s*function\\((\\w+)\\)\\{\\s*\\2=\\s*\\2\\.split\\(\"\"\\)\\s*;",
             "\\bc\\s*&&\\s*d\\.set\\([^,]+\\s*,\\s*(:encodeURIComponent\\s*\\()([a-zA-Z0-9$]+)\\("
     };
-    public static String STS_REGEX = "signatureTimestamp[=:](\\d+)";
+    private static final String STS_REGEX = "signatureTimestamp[=:](\\d+)";
 
     public static boolean userNextResponse = false;
     @Override
@@ -823,6 +829,7 @@ public class YoutubeStreamExtractor extends StreamExtractor {
                         .value(RACY_CHECK_OK, true)
                         .done())
                 .getBytes(StandardCharsets.UTF_8);
+
         if (userNextResponse){
             nextResponse = getJsonPostResponse(NEXT, body, localization);
         }
