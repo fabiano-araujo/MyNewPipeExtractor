@@ -762,7 +762,7 @@ public class YoutubeStreamExtractor extends StreamExtractor {
             "\\b([\\w$]{2,})\\s*=\\s*function\\((\\w+)\\)\\{\\s*\\2=\\s*\\2\\.split\\(\"\"\\)\\s*;",
             "\\bc\\s*&&\\s*d\\.set\\([^,]+\\s*,\\s*(:encodeURIComponent\\s*\\()([a-zA-Z0-9$]+)\\("
     };
-    private static final String STS_REGEX = "signatureTimestamp[=:](\\d+)";
+    public static String STS_REGEX = "signatureTimestamp[=:](\\d+)";
 
     public static boolean userNextResponse = false;
     @Override
