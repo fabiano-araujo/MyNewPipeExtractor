@@ -820,6 +820,7 @@ public class YoutubeStreamExtractor extends StreamExtractor {
     };
     public static String STS_REGEX = "signatureTimestamp[=:](\\d+)";
     public static boolean userNextResponse = false;
+
     @Override
     public void onFetchPage(@Nonnull final Downloader downloader)
             throws IOException, ExtractionException {
