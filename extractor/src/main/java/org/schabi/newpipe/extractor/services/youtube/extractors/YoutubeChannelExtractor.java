@@ -9,7 +9,6 @@ import static org.schabi.newpipe.extractor.services.youtube.YoutubeParsingHelper
 import static org.schabi.newpipe.extractor.services.youtube.YoutubeParsingHelper.getTextFromObject;
 import static org.schabi.newpipe.extractor.services.youtube.YoutubeParsingHelper.getValidJsonResponseBody;
 import static org.schabi.newpipe.extractor.services.youtube.YoutubeParsingHelper.prepareDesktopJsonBuilder;
-import static org.schabi.newpipe.extractor.utils.Utils.UTF_8;
 import static org.schabi.newpipe.extractor.utils.Utils.isNullOrEmpty;
 
 import com.grack.nanojson.JsonArray;
@@ -35,6 +34,7 @@ import org.schabi.newpipe.extractor.utils.JsonUtils;
 import org.schabi.newpipe.extractor.utils.Utils;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -98,7 +98,7 @@ public class YoutubeChannelExtractor extends ChannelExtractor {
                             getExtractorLocalization(), getExtractorContentCountry())
                             .value("url", "https://www.youtube.com/" + channelPath)
                             .done())
-                    .getBytes(UTF_8);
+                    .getBytes(StandardCharsets.UTF_8);
 
             final JsonObject jsonResponse = getJsonPostResponse("navigation/resolve_url",
                     body, getExtractorLocalization());
@@ -146,7 +146,7 @@ public class YoutubeChannelExtractor extends ChannelExtractor {
                             .value("browseId", id)
                             .value("params", "EgZ2aWRlb3M%3D") // Equal to videos
                             .done())
-                    .getBytes(UTF_8);
+                    .getBytes(StandardCharsets.UTF_8);
 
             final JsonObject jsonResponse = getJsonPostResponse("browse", body,
                     getExtractorLocalization());
@@ -332,16 +332,20 @@ public class YoutubeChannelExtractor extends ChannelExtractor {
         Page nextPage = null;
 
         if (getVideoTab() != null) {
-            final JsonObject gridRenderer = getVideoTab().getObject("content")
+            final JsonObject tabContent = getVideoTab().getObject("content");
+            JsonArray items = tabContent
                     .getObject("sectionListRenderer")
                     .getArray("contents").getObject(0).getObject("itemSectionRenderer")
-                    .getArray("contents").getObject(0).getObject("gridRenderer");
+                    .getArray("contents").getObject(0).getObject("gridRenderer").getArray("items");
+
+            if (items.isEmpty()) {
+                items = tabContent.getObject("richGridRenderer").getArray("contents");
+            }
 
             final List<String> channelIds = new ArrayList<>();
             channelIds.add(getName());
             channelIds.add(getUrl());
-            final JsonObject continuation = collectStreamsFrom(collector, gridRenderer
-                    .getArray("items"), channelIds);
+            final JsonObject continuation = collectStreamsFrom(collector, items, channelIds);
 
             nextPage = getNextPageFrom(continuation, channelIds);
         }
@@ -393,7 +397,7 @@ public class YoutubeChannelExtractor extends ChannelExtractor {
                         getExtractorContentCountry())
                         .value("continuation", continuation)
                         .done())
-                .getBytes(UTF_8);
+                .getBytes(StandardCharsets.UTF_8);
 
         return new Page(YOUTUBEI_V1_URL + "browse?key=" + getKey()
                 + DISABLE_PRETTY_PRINT_PARAMETER, null, channelIds, null, body);
@@ -433,6 +437,21 @@ public class YoutubeChannelExtractor extends ChannelExtractor {
                         return uploaderUrl;
                     }
                 });
+            } else if (video.has("richItemRenderer")) {
+                collector.commit(new YoutubeStreamInfoItemExtractor(
+                        video.getObject("richItemRenderer")
+                                .getObject("content").getObject("videoRenderer"), timeAgoParser) {
+                    @Override
+                    public String getUploaderName() {
+                        return uploaderName;
+                    }
+
+                    @Override
+                    public String getUploaderUrl() {
+                        return uploaderUrl;
+                    }
+                });
+
             } else if (video.has("continuationItemRenderer")) {
                 continuation = video.getObject("continuationItemRenderer");
             }

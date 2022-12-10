@@ -45,10 +45,10 @@ public final class YoutubeThrottlingDecrypter {
     // Escape the curly end brace to allow compatibility with Android's regex engine
     // See https://stackoverflow.com/q/45074813
     @SuppressWarnings("RegExpRedundantEscape")
-    private static final String DECRYPT_FUNCTION_BODY_REGEX =
+    public static String DECRYPT_FUNCTION_BODY_REGEX =
             "=\\s*function([\\S\\s]*?\\}\\s*return [\\w$]+?\\.join\\(\"\"\\)\\s*\\};)";
 
-    private static final Map<String, String> N_PARAMS_CACHE = new HashMap<>();
+    public static Map<String, String> N_PARAMS_CACHE = new HashMap<>();
     private static String decryptFunction;
     private static String decryptFunctionName;
 

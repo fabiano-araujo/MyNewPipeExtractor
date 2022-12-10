@@ -23,7 +23,6 @@ package org.schabi.newpipe.extractor.services.youtube;
 import static org.schabi.newpipe.extractor.NewPipe.getDownloader;
 import static org.schabi.newpipe.extractor.utils.Utils.HTTP;
 import static org.schabi.newpipe.extractor.utils.Utils.HTTPS;
-import static org.schabi.newpipe.extractor.utils.Utils.UTF_8;
 import static org.schabi.newpipe.extractor.utils.Utils.getStringResultFromRegexArray;
 import static org.schabi.newpipe.extractor.utils.Utils.isNullOrEmpty;
 import static java.util.Collections.singletonList;
@@ -55,7 +54,6 @@ import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.security.SecureRandom;
 import java.time.LocalDate;
@@ -66,10 +64,12 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Random;
+import java.util.Set;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
@@ -241,6 +241,18 @@ public final class YoutubeParsingHelper {
     private static final Pattern C_ANDROID_PATTERN = Pattern.compile("&c=ANDROID");
     private static final Pattern C_IOS_PATTERN = Pattern.compile("&c=IOS");
 
+    private static final Set<String> GOOGLE_URLS = Set.of("google.", "m.google.", "www.google.");
+    private static final Set<String> INVIDIOUS_URLS = Set.of("invidio.us", "dev.invidio.us",
+            "www.invidio.us", "redirect.invidious.io", "invidious.snopyta.org", "yewtu.be",
+            "tube.connect.cafe", "tubus.eduvid.org", "invidious.kavin.rocks", "invidious.site",
+            "invidious-us.kavin.rocks", "piped.kavin.rocks", "vid.mint.lgbt", "invidiou.site",
+            "invidious.fdn.fr", "invidious.048596.xyz", "invidious.zee.li", "vid.puffyan.us",
+            "ytprivate.com", "invidious.namazso.eu", "invidious.silkky.cloud", "ytb.trom.tf",
+            "invidious.exonip.de", "inv.riverside.rocks", "invidious.blamefran.net", "y.com.cm",
+            "invidious.moomoo.me", "yt.cyberhost.uk");
+    private static final Set<String> YOUTUBE_URLS = Set.of("youtube.com", "www.youtube.com",
+            "m.youtube.com", "music.youtube.com");
+
     /**
      * Determines how the consent cookie (that is required for YouTube) will be generated.
      *
@@ -262,21 +274,14 @@ public final class YoutubeParsingHelper {
         final String cachedUrl = extractCachedUrlIfNeeded(url);
         try {
             final URL u = new URL(cachedUrl);
-            final String host = u.getHost();
-            return host.startsWith("google.")
-                    || host.startsWith("m.google.")
-                    || host.startsWith("www.google.");
+            return GOOGLE_URLS.stream().anyMatch(item -> u.getHost().startsWith(item));
         } catch (final MalformedURLException e) {
             return false;
         }
     }
 
     public static boolean isYoutubeURL(@Nonnull final URL url) {
-        final String host = url.getHost();
-        return host.equalsIgnoreCase("youtube.com")
-                || host.equalsIgnoreCase("www.youtube.com")
-                || host.equalsIgnoreCase("m.youtube.com")
-                || host.equalsIgnoreCase("music.youtube.com");
+        return YOUTUBE_URLS.contains(url.getHost().toLowerCase(Locale.ROOT));
     }
 
     public static boolean isYoutubeServiceURL(@Nonnull final URL url) {
@@ -290,36 +295,8 @@ public final class YoutubeParsingHelper {
         return host.equalsIgnoreCase("hooktube.com");
     }
 
-    public static boolean isInvidioURL(@Nonnull final URL url) {
-        final String host = url.getHost();
-        return host.equalsIgnoreCase("invidio.us")
-                || host.equalsIgnoreCase("dev.invidio.us")
-                || host.equalsIgnoreCase("www.invidio.us")
-                || host.equalsIgnoreCase("redirect.invidious.io")
-                || host.equalsIgnoreCase("invidious.snopyta.org")
-                || host.equalsIgnoreCase("yewtu.be")
-                || host.equalsIgnoreCase("tube.connect.cafe")
-                || host.equalsIgnoreCase("tubus.eduvid.org")
-                || host.equalsIgnoreCase("invidious.kavin.rocks")
-                || host.equalsIgnoreCase("invidious-us.kavin.rocks")
-                || host.equalsIgnoreCase("piped.kavin.rocks")
-                || host.equalsIgnoreCase("invidious.site")
-                || host.equalsIgnoreCase("vid.mint.lgbt")
-                || host.equalsIgnoreCase("invidiou.site")
-                || host.equalsIgnoreCase("invidious.fdn.fr")
-                || host.equalsIgnoreCase("invidious.048596.xyz")
-                || host.equalsIgnoreCase("invidious.zee.li")
-                || host.equalsIgnoreCase("vid.puffyan.us")
-                || host.equalsIgnoreCase("ytprivate.com")
-                || host.equalsIgnoreCase("invidious.namazso.eu")
-                || host.equalsIgnoreCase("invidious.silkky.cloud")
-                || host.equalsIgnoreCase("invidious.exonip.de")
-                || host.equalsIgnoreCase("inv.riverside.rocks")
-                || host.equalsIgnoreCase("invidious.blamefran.net")
-                || host.equalsIgnoreCase("invidious.moomoo.me")
-                || host.equalsIgnoreCase("ytb.trom.tf")
-                || host.equalsIgnoreCase("yt.cyberhost.uk")
-                || host.equalsIgnoreCase("y.com.cm");
+    public static boolean isInvidiousURL(@Nonnull final URL url) {
+        return INVIDIOUS_URLS.contains(url.getHost().toLowerCase(Locale.ROOT));
     }
 
     public static boolean isY2ubeURL(@Nonnull final URL url) {
@@ -339,38 +316,16 @@ public final class YoutubeParsingHelper {
                 ? input.split(":")
                 : input.split("\\.");
 
-        String days = "0";
-        String hours = "0";
-        String minutes = "0";
-        final String seconds;
-
-        switch (splitInput.length) {
-            case 4:
-                days = splitInput[0];
-                hours = splitInput[1];
-                minutes = splitInput[2];
-                seconds = splitInput[3];
-                break;
-            case 3:
-                hours = splitInput[0];
-                minutes = splitInput[1];
-                seconds = splitInput[2];
-                break;
-            case 2:
-                minutes = splitInput[0];
-                seconds = splitInput[1];
-                break;
-            case 1:
-                seconds = splitInput[0];
-                break;
-            default:
-                throw new ParsingException("Error duration string with unknown format: " + input);
+        final int[] units = {24, 60, 60, 1};
+        final int offset = units.length - splitInput.length;
+        if (offset < 0) {
+            throw new ParsingException("Error duration string with unknown format: " + input);
         }
-
-        return ((convertDurationToInt(days) * 24
-                + convertDurationToInt(hours)) * 60
-                + convertDurationToInt(minutes)) * 60
-                + convertDurationToInt(seconds);
+        int duration = 0;
+        for (int i = 0; i < splitInput.length; i++) {
+            duration = units[i + offset] * (duration + convertDurationToInt(splitInput[i]));
+        }
+        return duration;
     }
 
     /**
@@ -596,7 +551,7 @@ public final class YoutubeParsingHelper {
                 .end()
                 .value("fetchLiveState", true)
                 .end()
-            .end().done().getBytes(UTF_8);
+            .end().done().getBytes(StandardCharsets.UTF_8);
         // @formatter:on
 
         final Map<String, List<String>> headers = new HashMap<>();
@@ -841,7 +796,7 @@ public final class YoutubeParsingHelper {
                     .end()
                 .end()
                 .value("input", "")
-            .end().done().getBytes(UTF_8);
+            .end().done().getBytes(StandardCharsets.UTF_8);
         // @formatter:on
 
         final Map<String, List<String>> headers = new HashMap<>();
@@ -913,7 +868,7 @@ public final class YoutubeParsingHelper {
                 for (final String param : params) {
                     if (param.split("=")[0].equals("q")) {
                         try {
-                            return URLDecoder.decode(param.split("=")[1], UTF_8);
+                            return Utils.decodeUrlUtf8(param.split("=")[1]);
                         } catch (final UnsupportedEncodingException e) {
                             return null;
                         }
@@ -985,18 +940,50 @@ public final class YoutubeParsingHelper {
         }
 
         final StringBuilder textBuilder = new StringBuilder();
-        for (final Object textPart : textObject.getArray("runs")) {
-            final String text = ((JsonObject) textPart).getString("text");
-            if (html && ((JsonObject) textPart).has("navigationEndpoint")) {
-                final String url = getUrlFromNavigationEndpoint(((JsonObject) textPart)
-                        .getObject("navigationEndpoint"));
-                if (!isNullOrEmpty(url)) {
-                    textBuilder.append("<a href=\"").append(url).append("\">").append(text)
-                            .append("</a>");
-                    continue;
+        for (final Object o : textObject.getArray("runs")) {
+            final JsonObject run = (JsonObject) o;
+            String text = run.getString("text");
+
+            if (html) {
+                if (run.has("navigationEndpoint")) {
+                    final String url = getUrlFromNavigationEndpoint(run
+                            .getObject("navigationEndpoint"));
+                    if (!isNullOrEmpty(url)) {
+                        text = "<a href=\"" + url + "\">" + text + "</a>";
+                    }
                 }
+
+                final boolean bold = run.has("bold")
+                        && run.getBoolean("bold");
+                final boolean italic = run.has("italics")
+                        && run.getBoolean("italics");
+                final boolean strikethrough = run.has("strikethrough")
+                        && run.getBoolean("strikethrough");
+
+                if (bold) {
+                    textBuilder.append("<b>");
+                }
+                if (italic) {
+                    textBuilder.append("<i>");
+                }
+                if (strikethrough) {
+                    textBuilder.append("<s>");
+                }
+
+                textBuilder.append(text);
+
+                if (strikethrough) {
+                    textBuilder.append("</s>");
+                }
+                if (italic) {
+                    textBuilder.append("</i>");
+                }
+                if (bold) {
+                    textBuilder.append("</b>");
+                }
+            } else {
+                textBuilder.append(text);
             }
-            textBuilder.append(text);
         }
 
         String text = textBuilder.toString();
@@ -1007,6 +994,90 @@ public final class YoutubeParsingHelper {
         }
 
         return text;
+    }
+
+    /**
+     * Parse a video description in the new "attributed" format, which contains the entire visible
+     * plaintext ({@code content}) and an array of {@code commandRuns}.
+     *
+     * <p>
+     * The {@code commandRuns} include the links and their position in the text.
+     * </p>
+     *
+     * @param attributedDescription the JSON object of the attributed description
+     * @return the parsed description, in HTML format, as a string
+     */
+    @Nullable
+    public static String getAttributedDescription(
+            @Nullable final JsonObject attributedDescription) {
+        if (isNullOrEmpty(attributedDescription)) {
+            return null;
+        }
+
+        final String content = attributedDescription.getString("content");
+        final JsonArray commandRuns = attributedDescription.getArray("commandRuns");
+        if (content == null) {
+            return null;
+        }
+
+        final StringBuilder textBuilder = new StringBuilder();
+        int textStart = 0;
+
+        for (final Object commandRun : commandRuns) {
+            if (!(commandRun instanceof JsonObject)) {
+                continue;
+            }
+
+            final JsonObject run = ((JsonObject) commandRun);
+            final int startIndex = run.getInt("startIndex", -1);
+            final int length = run.getInt("length");
+            final JsonObject navigationEndpoint = run.getObject("onTap")
+                    .getObject("innertubeCommand");
+
+            if (startIndex < 0 || length < 1 || navigationEndpoint == null) {
+                continue;
+            }
+
+            final String url;
+            try {
+                url = getUrlFromNavigationEndpoint(navigationEndpoint);
+            } catch (final ParsingException e) {
+                continue;
+            }
+
+            if (url == null) {
+                continue;
+            }
+
+            // Append text before the link
+            if (startIndex > textStart) {
+                textBuilder.append(content, textStart, startIndex);
+            }
+
+            // Trim and append link text
+            // Channel/Video format: 3xu00a0, (/ •), u00a0, <Name>, 2xu00a0
+            final String linkText = content.substring(startIndex, startIndex + length)
+                    .replace('\u00a0', ' ')
+                    .trim()
+                    .replaceFirst("^[/•] *", "");
+
+            textBuilder.append("<a href=\"")
+                    .append(url)
+                    .append("\">")
+                    .append(linkText)
+                    .append("</a>");
+
+            textStart = startIndex + length;
+        }
+
+        // Append the remaining text
+        if (textStart < content.length()) {
+            textBuilder.append(content.substring(textStart));
+        }
+
+        return textBuilder.toString()
+                .replaceAll("\\n", "<br>")
+                .replaceAll(" {2}", " &nbsp;");
     }
 
     @Nullable
