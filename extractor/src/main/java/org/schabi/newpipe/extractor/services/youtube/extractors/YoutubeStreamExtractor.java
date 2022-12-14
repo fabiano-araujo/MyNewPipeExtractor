@@ -804,14 +804,14 @@ public class YoutubeStreamExtractor extends StreamExtractor {
     // Fetch page
     //////////////////////////////////////////////////////////////////////////*/
 
-    public static String FORMATS = "formats";
-    public static String ADAPTIVE_FORMATS = "adaptiveFormats";
-    public static String DEOBFUSCATION_FUNC_NAME = "deobfuscate";
-    public static String STREAMING_DATA = "streamingData";
-    public static String PLAYER = "player";
-    public static String NEXT = "next";
-    public static String SIGNATURE_CIPHER = "signatureCipher";
-    public static String CIPHER = "cipher";
+    public static  String FORMATS = "formats";
+    public static  String ADAPTIVE_FORMATS = "adaptiveFormats";
+    public static  String DEOBFUSCATION_FUNC_NAME = "deobfuscate";
+    public static  String STREAMING_DATA = "streamingData";
+    public static  String PLAYER = "player";
+    public static  String NEXT = "next";
+    public static  String SIGNATURE_CIPHER = "signatureCipher";
+    public static  String CIPHER = "cipher";
 
     public static String[] REGEXES = {
             "(?:\\b|[^a-zA-Z0-9$])([a-zA-Z0-9$]{2,})\\s*=\\s*function\\(\\s*a\\s*\\)"
@@ -889,10 +889,10 @@ public class YoutubeStreamExtractor extends StreamExtractor {
                         .value(RACY_CHECK_OK, true)
                         .done())
                 .getBytes(StandardCharsets.UTF_8);
+
         if (userNextResponse){
             nextResponse = getJsonPostResponse(NEXT, body, localization);
         }
-
         // streamType can only have LIVE_STREAM, POST_LIVE_STREAM and VIDEO_STREAM values (see
         // setStreamType()), so this block will be run only for POST_LIVE_STREAM and VIDEO_STREAM
         // values if fetching of the ANDROID client is not forced

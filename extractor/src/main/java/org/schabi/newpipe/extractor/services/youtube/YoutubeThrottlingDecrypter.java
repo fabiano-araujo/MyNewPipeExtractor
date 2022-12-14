@@ -37,7 +37,7 @@ import javax.annotation.Nonnull;
 public final class YoutubeThrottlingDecrypter {
 
     public static Pattern N_PARAM_PATTERN = Pattern.compile("[&?]n=([^&]+)");
-    public static Pattern DECRYPT_FUNCTION_NAME_PATTERN = Pattern.compile(
+    public static  Pattern DECRYPT_FUNCTION_NAME_PATTERN = Pattern.compile(
             // CHECKSTYLE:OFF
             "\\.get\\(\"n\"\\)\\)&&\\([a-zA-Z0-9$_]=([a-zA-Z0-9$_]+)(?:\\[(\\d+)])?\\([a-zA-Z0-9$_]\\)");
             // CHECKSTYLE:ON
@@ -45,10 +45,10 @@ public final class YoutubeThrottlingDecrypter {
     // Escape the curly end brace to allow compatibility with Android's regex engine
     // See https://stackoverflow.com/q/45074813
     @SuppressWarnings("RegExpRedundantEscape")
-    public static String DECRYPT_FUNCTION_BODY_REGEX =
+    public static  String DECRYPT_FUNCTION_BODY_REGEX =
             "=\\s*function([\\S\\s]*?\\}\\s*return [\\w$]+?\\.join\\(\"\"\\)\\s*\\};)";
 
-    public static Map<String, String> N_PARAMS_CACHE = new HashMap<>();
+    private static final Map<String, String> N_PARAMS_CACHE = new HashMap<>();
     private static String decryptFunction;
     private static String decryptFunctionName;
 
