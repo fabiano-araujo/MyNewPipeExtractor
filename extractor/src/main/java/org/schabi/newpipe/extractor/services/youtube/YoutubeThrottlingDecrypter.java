@@ -36,8 +36,8 @@ import javax.annotation.Nonnull;
  */
 public final class YoutubeThrottlingDecrypter {
 
-    public static final Pattern N_PARAM_PATTERN = Pattern.compile("[&?]n=([^&]+)");
-    public static final Pattern DECRYPT_FUNCTION_NAME_PATTERN = Pattern.compile(
+    public static Pattern N_PARAM_PATTERN = Pattern.compile("[&?]n=([^&]+)");
+    public static Pattern DECRYPT_FUNCTION_NAME_PATTERN = Pattern.compile(
             // CHECKSTYLE:OFF
             "\\.get\\(\"n\"\\)\\)&&\\([a-zA-Z0-9$_]=([a-zA-Z0-9$_]+)(?:\\[(\\d+)])?\\([a-zA-Z0-9$_]\\)");
             // CHECKSTYLE:ON
