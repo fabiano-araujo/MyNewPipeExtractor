@@ -388,8 +388,7 @@ public final class YoutubeParsingHelper {
      * @return Whether given id belongs to a YouTube Mix
      */
     public static boolean isYoutubeMixId(@Nonnull final String playlistId) {
-        return playlistId.startsWith("RD")
-                && !isYoutubeMusicMixId(playlistId);
+        return playlistId.startsWith("RD");
     }
 
     /**
@@ -823,7 +822,7 @@ public final class YoutubeParsingHelper {
 
         try {
             final String url = "https://music.youtube.com/sw.js";
-            final var headers = getOriginReferrerHeaders("https://music.youtube.com");
+            final var headers = getOriginReferrerHeaders(YOUTUBE_MUSIC_URL);
             final String response = getDownloader().get(url, headers).responseBody();
             musicClientVersion = getStringResultFromRegexArray(response,
                     INNERTUBE_CONTEXT_CLIENT_VERSION_REGEXES, 1);
@@ -844,10 +843,11 @@ public final class YoutubeParsingHelper {
     }
 
     @Nullable
-    public static String getUrlFromNavigationEndpoint(@Nonnull final JsonObject navigationEndpoint)
-            throws ParsingException {
+    public static String getUrlFromNavigationEndpoint(
+            @Nonnull final JsonObject navigationEndpoint) {
         if (navigationEndpoint.has("urlEndpoint")) {
-            String internUrl = navigationEndpoint.getObject("urlEndpoint").getString("url");
+            String internUrl = navigationEndpoint.getObject("urlEndpoint")
+                    .getString("url");
             if (internUrl.startsWith("https://www.youtube.com/redirect?")) {
                 // remove https://www.youtube.com part to fall in the next if block
                 internUrl = internUrl.substring(23);
@@ -872,7 +872,9 @@ public final class YoutubeParsingHelper {
                     || internUrl.startsWith("/watch")) {
                 return "https://www.youtube.com" + internUrl;
             }
-        } else if (navigationEndpoint.has("browseEndpoint")) {
+        }
+
+        if (navigationEndpoint.has("browseEndpoint")) {
             final JsonObject browseEndpoint = navigationEndpoint.getObject("browseEndpoint");
             final String canonicalBaseUrl = browseEndpoint.getString("canonicalBaseUrl");
             final String browseId = browseEndpoint.getString("browseId");
@@ -885,26 +887,39 @@ public final class YoutubeParsingHelper {
             if (!isNullOrEmpty(canonicalBaseUrl)) {
                 return "https://www.youtube.com" + canonicalBaseUrl;
             }
+        }
 
-            throw new ParsingException("canonicalBaseUrl is null and browseId is not a channel (\""
-                    + browseEndpoint + "\")");
-        } else if (navigationEndpoint.has("watchEndpoint")) {
+        if (navigationEndpoint.has("watchEndpoint")) {
             final StringBuilder url = new StringBuilder();
-            url.append("https://www.youtube.com/watch?v=").append(navigationEndpoint
-                    .getObject("watchEndpoint").getString(VIDEO_ID));
+            url.append("https://www.youtube.com/watch?v=")
+                    .append(navigationEndpoint.getObject("watchEndpoint")
+                            .getString(VIDEO_ID));
             if (navigationEndpoint.getObject("watchEndpoint").has("playlistId")) {
                 url.append("&list=").append(navigationEndpoint.getObject("watchEndpoint")
                         .getString("playlistId"));
             }
             if (navigationEndpoint.getObject("watchEndpoint").has("startTimeSeconds")) {
-                url.append("&amp;t=").append(navigationEndpoint.getObject("watchEndpoint")
+                url.append("&t=")
+                        .append(navigationEndpoint.getObject("watchEndpoint")
                         .getInt("startTimeSeconds"));
             }
             return url.toString();
-        } else if (navigationEndpoint.has("watchPlaylistEndpoint")) {
-            return "https://www.youtube.com/playlist?list="
-                    + navigationEndpoint.getObject("watchPlaylistEndpoint").getString("playlistId");
         }
+
+        if (navigationEndpoint.has("watchPlaylistEndpoint")) {
+            return "https://www.youtube.com/playlist?list="
+                    + navigationEndpoint.getObject("watchPlaylistEndpoint")
+                    .getString("playlistId");
+        }
+
+        if (navigationEndpoint.has("commandMetadata")) {
+            final JsonObject metadata = navigationEndpoint.getObject("commandMetadata")
+                    .getObject("webCommandMetadata");
+            if (metadata.has("url")) {
+                return "https://www.youtube.com" + metadata.getString("url");
+            }
+        }
+
         return null;
     }
 
@@ -917,8 +932,7 @@ public final class YoutubeParsingHelper {
      * @return text in the JSON object or {@code null}
      */
     @Nullable
-    public static String getTextFromObject(final JsonObject textObject, final boolean html)
-            throws ParsingException {
+    public static String getTextFromObject(final JsonObject textObject, final boolean html) {
         if (isNullOrEmpty(textObject)) {
             return null;
         }
@@ -937,12 +951,12 @@ public final class YoutubeParsingHelper {
             String text = run.getString("text");
 
             if (html) {
-                text = Entities.escape(text);
                 if (run.has("navigationEndpoint")) {
-                    final String url = getUrlFromNavigationEndpoint(run
-                            .getObject("navigationEndpoint"));
+                    final String url = getUrlFromNavigationEndpoint(
+                            run.getObject("navigationEndpoint"));
                     if (!isNullOrEmpty(url)) {
-                        text = "<a href=\"" + url + "\">" + text + "</a>";
+                        text = "<a href=\"" + Entities.escape(url) + "\">" + Entities.escape(text)
+                                + "</a>";
                     }
                 }
 
@@ -1008,10 +1022,11 @@ public final class YoutubeParsingHelper {
         }
 
         final String content = attributedDescription.getString("content");
-        final JsonArray commandRuns = attributedDescription.getArray("commandRuns");
         if (content == null) {
             return null;
         }
+
+        final JsonArray commandRuns = attributedDescription.getArray("commandRuns");
 
         final StringBuilder textBuilder = new StringBuilder();
         int textStart = 0;
@@ -1031,12 +1046,7 @@ public final class YoutubeParsingHelper {
                 continue;
             }
 
-            final String url;
-            try {
-                url = getUrlFromNavigationEndpoint(navigationEndpoint);
-            } catch (final ParsingException e) {
-                continue;
-            }
+            final String url = getUrlFromNavigationEndpoint(navigationEndpoint);
 
             if (url == null) {
                 continue;
@@ -1055,9 +1065,9 @@ public final class YoutubeParsingHelper {
                     .replaceFirst("^[/•] *", "");
 
             textBuilder.append("<a href=\"")
-                    .append(url)
+                    .append(Entities.escape(url))
                     .append("\">")
-                    .append(linkText)
+                    .append(Entities.escape(linkText))
                     .append("</a>");
 
             textStart = startIndex + length;
@@ -1074,13 +1084,12 @@ public final class YoutubeParsingHelper {
     }
 
     @Nullable
-    public static String getTextFromObject(final JsonObject textObject) throws ParsingException {
+    public static String getTextFromObject(final JsonObject textObject) {
         return getTextFromObject(textObject, false);
     }
 
     @Nullable
-    public static String getUrlFromObject(final JsonObject textObject) throws ParsingException {
-
+    public static String getUrlFromObject(final JsonObject textObject) {
         if (isNullOrEmpty(textObject)) {
             return null;
         }
@@ -1101,8 +1110,7 @@ public final class YoutubeParsingHelper {
     }
 
     @Nullable
-    public static String getTextAtKey(@Nonnull final JsonObject jsonObject, final String theKey)
-            throws ParsingException {
+    public static String getTextAtKey(@Nonnull final JsonObject jsonObject, final String theKey) {
         if (jsonObject.isString(theKey)) {
             return jsonObject.getString(theKey);
         } else {
