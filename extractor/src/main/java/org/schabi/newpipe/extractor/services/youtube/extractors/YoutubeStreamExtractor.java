@@ -809,8 +809,8 @@ public class YoutubeStreamExtractor extends StreamExtractor {
             "\\b([\\w$]{2,})\\s*=\\s*function\\((\\w+)\\)\\{\\s*\\2=\\s*\\2\\.split\\(\"\"\\)\\s*;",
             "\\bc\\s*&&\\s*d\\.set\\([^,]+\\s*,\\s*(:encodeURIComponent\\s*\\()([a-zA-Z0-9$]+)\\("
     };
-    public static String STS_REGEX = "signatureTimestamp[=:](\\d+)";
 
+    public static String STS_REGEX = "signatureTimestamp[=:](\\d+)";
     public static boolean userNextResponse = false;
 
     @Override
@@ -870,6 +870,10 @@ public class YoutubeStreamExtractor extends StreamExtractor {
         playerMicroFormatRenderer = youtubePlayerResponse.getObject("microformat")
                 .getObject("playerMicroformatRenderer");
 
+        if (isPlayerResponseNotValid(playerResponse, videoId)) {
+            throw new ExtractionException("Initial player response is not valid");
+        }
+
         final byte[] body = JsonWriter.string(
                 prepareDesktopJsonBuilder(localization, contentCountry)
                         .value(VIDEO_ID, videoId)
@@ -877,9 +881,11 @@ public class YoutubeStreamExtractor extends StreamExtractor {
                         .value(RACY_CHECK_OK, true)
                         .done())
                 .getBytes(StandardCharsets.UTF_8);
+
         if (userNextResponse){
             nextResponse = getJsonPostResponse(NEXT, body, localization);
         }
+
         // streamType can only have LIVE_STREAM, POST_LIVE_STREAM and VIDEO_STREAM values (see
         // setStreamType()), so this block will be run only for POST_LIVE_STREAM and VIDEO_STREAM
         // values if fetching of the ANDROID client is not forced
@@ -1061,6 +1067,11 @@ public class YoutubeStreamExtractor extends StreamExtractor {
         final JsonObject tvHtml5EmbedPlayerResponse = getJsonPostResponse(PLAYER,
                 createDesktopPlayerBody(localization, contentCountry, videoId, sts, true,
                         html5Cpn), localization);
+
+        if (isPlayerResponseNotValid(tvHtml5EmbedPlayerResponse, videoId)) {
+            return;
+        }
+
         final JsonObject streamingData = tvHtml5EmbedPlayerResponse.getObject(
                 STREAMING_DATA);
         if (!isNullOrEmpty(streamingData)) {
@@ -1070,12 +1081,24 @@ public class YoutubeStreamExtractor extends StreamExtractor {
     }
 
     /**
-     * Checks whether an additional player response is not valid.
+     * Checks whether a player response is invalid.
      *
      * <p>
      * If YouTube detect that requests come from a third party client, they may replace the real
      * player response by another one of a video saying that this content is not available on this
-     * app and to watch it on the latest version of YouTube.
+     * app and to watch it on the latest version of YouTube. This behavior has been observed on the
+     * {@code ANDROID} client, see
+     * <a href="https://github.com/TeamNewPipe/NewPipe/issues/8713">
+     *     https://github.com/TeamNewPipe/NewPipe/issues/8713</a>.
+     * </p>
+     *
+     * <p>
+     * YouTube may also sometimes for currently unknown reasons rate-limit an IP, and replace the
+     * real one by a player response with a video that says that the requested video is
+     * unavailable. This behaviour has been observed in Piped on the InnerTube clients used by the
+     * extractor ({@code ANDROID} and {@code WEB} clients) which should apply for all clients, see
+     * <a href="https://github.com/TeamPiped/Piped/issues/2487">
+     *     https://github.com/TeamPiped/Piped/issues/2487</a>.
      * </p>
      *
      * <p>
@@ -1083,22 +1106,15 @@ public class YoutubeStreamExtractor extends StreamExtractor {
      * same as the one requested by the extractor.
      * </p>
      *
-     * <p>
-     * This behavior has been already observed on the {@code ANDROID} client, see
-     * <a href="https://github.com/TeamNewPipe/NewPipe/issues/8713">
-     *     https://github.com/TeamNewPipe/NewPipe/issues/8713</a>.
-     * </p>
-     *
-     * @param additionalPlayerResponse an additional response to the one of the {@code HTML5}
-     *                                 client used
-     * @param videoId                  the video ID of the content requested
+     * @param playerResponse a player response from any client
+     * @param videoId        the video ID of the content requested
      * @return whether the video ID of the player response is not equal to the one requested
      */
     private static boolean isPlayerResponseNotValid(
-            @Nonnull final JsonObject additionalPlayerResponse,
+            @Nonnull final JsonObject playerResponse,
             @Nonnull final String videoId) {
-        return !videoId.equals(additionalPlayerResponse.getObject("videoDetails")
-                .getString("videoId", ""));
+        return !videoId.equals(playerResponse.getObject("videoDetails")
+                .getString("videoId"));
     }
 
     private static void storePlayerJs() throws ParsingException {
@@ -1314,7 +1330,7 @@ public class YoutubeStreamExtractor extends StreamExtractor {
                     .setAudioTrackId(itagItem.getAudioTrackId())
                     .setAudioTrackName(itagItem.getAudioTrackName())
                     .setAudioLocale(itagItem.getAudioLocale())
-                    .setIsDescriptive(itagItem.isDescriptiveAudio())
+                    .setAudioTrackType(itagItem.getAudioTrackType())
                     .setItagItem(itagItem);
 
             if (streamType == StreamType.LIVE_STREAM
@@ -1487,16 +1503,11 @@ public class YoutubeStreamExtractor extends StreamExtractor {
                     itagItem.setAudioLocale(LocaleCompat.forLanguageTag(
                             audioTrackId.substring(0, audioTrackIdLastLocaleCharacter)));
                 }
+                itagItem.setAudioTrackType(YoutubeParsingHelper.extractAudioTrackType(streamUrl));
             }
 
             itagItem.setAudioTrackName(formatData.getObject("audioTrack")
                     .getString("displayName"));
-
-            // Descriptive audio tracks
-            // This information is also provided as a protobuf object in the formatData
-            itagItem.setIsDescriptiveAudio(streamUrl.contains("acont%3Ddescriptive")
-                    // Support "decoded" URLs
-                    || streamUrl.contains("acont=descriptive"));
         }
 
         // YouTube return the content length and the approximate duration as strings
