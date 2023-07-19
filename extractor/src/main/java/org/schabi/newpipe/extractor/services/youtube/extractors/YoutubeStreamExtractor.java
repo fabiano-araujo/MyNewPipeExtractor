@@ -793,7 +793,7 @@ public class YoutubeStreamExtractor extends StreamExtractor {
 
     public static String FORMATS = "formats";
     public static String ADAPTIVE_FORMATS = "adaptiveFormats";
-    public static String DEOBFUSCATION_FUNC_NAME = "deobfuscate";
+    public static  String DEOBFUSCATION_FUNC_NAME = "deobfuscate";
     public static String STREAMING_DATA = "streamingData";
     public static String PLAYER = "player";
     public static String NEXT = "next";
@@ -809,10 +809,9 @@ public class YoutubeStreamExtractor extends StreamExtractor {
             "\\b([\\w$]{2,})\\s*=\\s*function\\((\\w+)\\)\\{\\s*\\2=\\s*\\2\\.split\\(\"\"\\)\\s*;",
             "\\bc\\s*&&\\s*d\\.set\\([^,]+\\s*,\\s*(:encodeURIComponent\\s*\\()([a-zA-Z0-9$]+)\\("
     };
-
     public static String STS_REGEX = "signatureTimestamp[=:](\\d+)";
-    public static boolean userNextResponse = false;
 
+    public static boolean userNextResponse = false;
     @Override
     public void onFetchPage(@Nonnull final Downloader downloader)
             throws IOException, ExtractionException {
