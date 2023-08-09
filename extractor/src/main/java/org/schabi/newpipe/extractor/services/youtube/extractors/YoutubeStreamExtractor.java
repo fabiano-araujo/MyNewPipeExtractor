@@ -793,7 +793,7 @@ public class YoutubeStreamExtractor extends StreamExtractor {
 
     public static String FORMATS = "formats";
     public static String ADAPTIVE_FORMATS = "adaptiveFormats";
-    public static  String DEOBFUSCATION_FUNC_NAME = "deobfuscate";
+    public static String DEOBFUSCATION_FUNC_NAME = "deobfuscate";
     public static String STREAMING_DATA = "streamingData";
     public static String PLAYER = "player";
     public static String NEXT = "next";
@@ -810,14 +810,13 @@ public class YoutubeStreamExtractor extends StreamExtractor {
             "\\bc\\s*&&\\s*d\\.set\\([^,]+\\s*,\\s*(:encodeURIComponent\\s*\\()([a-zA-Z0-9$]+)\\("
     };
     public static String STS_REGEX = "signatureTimestamp[=:](\\d+)";
-
     public static boolean userNextResponse = false;
     @Override
     public void onFetchPage(@Nonnull final Downloader downloader)
             throws IOException, ExtractionException {
-        initStsFromPlayerJsIfNeeded();
-
         final String videoId = getId();
+        initStsFromPlayerJsIfNeeded(videoId);
+
         final Localization localization = getExtractorLocalization();
         final ContentCountry contentCountry = getExtractorContentCountry();
         html5Cpn = generateContentPlaybackNonce();
@@ -880,11 +879,9 @@ public class YoutubeStreamExtractor extends StreamExtractor {
                         .value(RACY_CHECK_OK, true)
                         .done())
                 .getBytes(StandardCharsets.UTF_8);
-
         if (userNextResponse){
             nextResponse = getJsonPostResponse(NEXT, body, localization);
         }
-
         // streamType can only have LIVE_STREAM, POST_LIVE_STREAM and VIDEO_STREAM values (see
         // setStreamType()), so this block will be run only for POST_LIVE_STREAM and VIDEO_STREAM
         // values if fetching of the ANDROID client is not forced
@@ -985,11 +982,9 @@ public class YoutubeStreamExtractor extends StreamExtractor {
                         .value(CPN, androidCpn)
                         .value(CONTENT_CHECK_OK, true)
                         .value(RACY_CHECK_OK, true)
-                        // Workaround getting streaming URLs which can return 403 HTTP response
-                        // codes by using stories parameter for Android client requests
-                        // This behavior only happen in certain countries such as UK as of
-                        // 10.29.2022
-                        .value("params", "8AEB")
+                        // Workaround getting streaming URLs which return 403 HTTP response code by
+                        // using some parameters for Android client requests
+                        .value("params", "CgIQBg")
                         .done())
                 .getBytes(StandardCharsets.UTF_8);
 
@@ -1058,8 +1053,6 @@ public class YoutubeStreamExtractor extends StreamExtractor {
                                              @Nonnull final Localization localization,
                                              @Nonnull final String videoId)
             throws IOException, ExtractionException {
-        initStsFromPlayerJsIfNeeded();
-
         // Because a cpn is unique to each request, we need to generate it again
         html5Cpn = generateContentPlaybackNonce();
 
@@ -1116,9 +1109,9 @@ public class YoutubeStreamExtractor extends StreamExtractor {
                 .getString("videoId"));
     }
 
-    private static void storePlayerJs() throws ParsingException {
+    private static void storePlayerJs(@Nonnull final String videoId) throws ParsingException {
         try {
-            playerCode = YoutubeJavaScriptExtractor.extractJavaScriptCode();
+            playerCode = YoutubeJavaScriptExtractor.extractJavaScriptCode(videoId);
         } catch (final Exception e) {
             throw new ParsingException("Could not store JavaScript player", e);
         }
@@ -1183,12 +1176,13 @@ public class YoutubeStreamExtractor extends StreamExtractor {
         return cachedDeobfuscationCode;
     }
 
-    private static void initStsFromPlayerJsIfNeeded() throws ParsingException {
+    private static void initStsFromPlayerJsIfNeeded(@Nonnull final String videoId)
+            throws ParsingException {
         if (!isNullOrEmpty(sts)) {
             return;
         }
         if (playerCode == null) {
-            storePlayerJs();
+            storePlayerJs(videoId);
             if (playerCode == null) {
                 throw new ParsingException("playerCode is null");
             }

@@ -1,18 +1,14 @@
 package org.schabi.newpipe.extractor.services.soundcloud;
 
-import static org.schabi.newpipe.extractor.ServiceList.SoundCloud;
-import static org.schabi.newpipe.extractor.utils.Utils.isNullOrEmpty;
-import static org.schabi.newpipe.extractor.utils.Utils.replaceHttpWithHttps;
-
 import com.grack.nanojson.JsonArray;
 import com.grack.nanojson.JsonObject;
 import com.grack.nanojson.JsonParser;
 import com.grack.nanojson.JsonParserException;
-
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
+import org.schabi.newpipe.extractor.MultiInfoItemsCollector;
 import org.schabi.newpipe.extractor.NewPipe;
 import org.schabi.newpipe.extractor.channel.ChannelInfoItemsCollector;
 import org.schabi.newpipe.extractor.downloader.Downloader;
@@ -21,6 +17,7 @@ import org.schabi.newpipe.extractor.exceptions.ExtractionException;
 import org.schabi.newpipe.extractor.exceptions.ParsingException;
 import org.schabi.newpipe.extractor.exceptions.ReCaptchaException;
 import org.schabi.newpipe.extractor.services.soundcloud.extractors.SoundcloudChannelInfoItemExtractor;
+import org.schabi.newpipe.extractor.services.soundcloud.extractors.SoundcloudPlaylistInfoItemExtractor;
 import org.schabi.newpipe.extractor.services.soundcloud.extractors.SoundcloudStreamInfoItemExtractor;
 import org.schabi.newpipe.extractor.stream.StreamInfoItemsCollector;
 import org.schabi.newpipe.extractor.utils.JsonUtils;
@@ -28,6 +25,7 @@ import org.schabi.newpipe.extractor.utils.Parser;
 import org.schabi.newpipe.extractor.utils.Parser.RegexException;
 import org.schabi.newpipe.extractor.utils.Utils;
 
+import javax.annotation.Nonnull;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -38,7 +36,9 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-import javax.annotation.Nonnull;
+import static org.schabi.newpipe.extractor.ServiceList.SoundCloud;
+import static org.schabi.newpipe.extractor.utils.Utils.isNullOrEmpty;
+import static org.schabi.newpipe.extractor.utils.Utils.replaceHttpWithHttps;
 
 public final class SoundcloudParsingHelper {
     private static String clientId;
@@ -200,6 +200,7 @@ public final class SoundcloudParsingHelper {
      *
      * @return the next streams url, empty if don't have
      */
+    @Nonnull
     public static String getUsersFromApi(final ChannelInfoItemsCollector collector,
                                          final String apiUrl) throws IOException,
             ReCaptchaException, ParsingException {
@@ -221,17 +222,7 @@ public final class SoundcloudParsingHelper {
             }
         }
 
-        String nextPageUrl;
-        try {
-            nextPageUrl = responseObject.getString("next_href");
-            if (!nextPageUrl.contains("client_id=")) {
-                nextPageUrl += "&client_id=" + SoundcloudParsingHelper.clientId();
-            }
-        } catch (final Exception ignored) {
-            nextPageUrl = "";
-        }
-
-        return nextPageUrl;
+        return getNextPageUrl(responseObject);
     }
 
     /**
@@ -261,6 +252,7 @@ public final class SoundcloudParsingHelper {
      *
      * @return the next streams url, empty if don't have
      */
+    @Nonnull
     public static String getStreamsFromApi(final StreamInfoItemsCollector collector,
                                            final String apiUrl,
                                            final boolean charts) throws IOException,
@@ -288,6 +280,63 @@ public final class SoundcloudParsingHelper {
             }
         }
 
+        return getNextPageUrl(responseObject);
+    }
+
+    @Nonnull
+    private static String getNextPageUrl(@Nonnull final JsonObject response) {
+        try {
+            String nextPageUrl = response.getString("next_href");
+            if (!nextPageUrl.contains("client_id=")) {
+                nextPageUrl += "&client_id=" + SoundcloudParsingHelper.clientId();
+            }
+            return nextPageUrl;
+        } catch (final Exception ignored) {
+            return "";
+        }
+    }
+
+    public static String getStreamsFromApi(final StreamInfoItemsCollector collector,
+                                           final String apiUrl) throws ReCaptchaException,
+            ParsingException, IOException {
+        return getStreamsFromApi(collector, apiUrl, false);
+    }
+
+    public static String getInfoItemsFromApi(final MultiInfoItemsCollector collector,
+                                             final String apiUrl) throws ReCaptchaException,
+            ParsingException, IOException {
+        final Response response = NewPipe.getDownloader().get(apiUrl, SoundCloud.getLocalization());
+        if (response.responseCode() >= 400) {
+            throw new IOException("Could not get streams from API, HTTP "
+                    + response.responseCode());
+        }
+
+        final JsonObject responseObject;
+        try {
+            responseObject = JsonParser.object().from(response.responseBody());
+        } catch (final JsonParserException e) {
+            throw new ParsingException("Could not parse json response", e);
+        }
+
+        responseObject.getArray("collection")
+                .stream()
+                .filter(JsonObject.class::isInstance)
+                .map(JsonObject.class::cast)
+                .forEach(searchResult -> {
+                    final String kind = searchResult.getString("kind", "");
+                    switch (kind) {
+                        case "user":
+                            collector.commit(new SoundcloudChannelInfoItemExtractor(searchResult));
+                            break;
+                        case "track":
+                            collector.commit(new SoundcloudStreamInfoItemExtractor(searchResult));
+                            break;
+                        case "playlist":
+                            collector.commit(new SoundcloudPlaylistInfoItemExtractor(searchResult));
+                            break;
+                    }
+                });
+
         String nextPageUrl;
         try {
             nextPageUrl = responseObject.getString("next_href");
@@ -299,12 +348,6 @@ public final class SoundcloudParsingHelper {
         }
 
         return nextPageUrl;
-    }
-
-    public static String getStreamsFromApi(final StreamInfoItemsCollector collector,
-                                           final String apiUrl) throws ReCaptchaException,
-            ParsingException, IOException {
-        return getStreamsFromApi(collector, apiUrl, false);
     }
 
     @Nonnull
@@ -319,6 +362,7 @@ public final class SoundcloudParsingHelper {
         return replaceHttpWithHttps(url);
     }
 
+    @Nonnull
     public static String getUploaderName(final JsonObject object) {
         return object.getObject("user").getString("username", "");
     }
