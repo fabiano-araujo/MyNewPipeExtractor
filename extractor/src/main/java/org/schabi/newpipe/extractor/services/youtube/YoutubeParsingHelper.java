@@ -1,7 +1,7 @@
 /*
  * Created by Christian Schabesberger on 02.03.16.
  *
- * Copyright (C) Christian Schabesberger 2016 <chris.schabesberger@mailbox.org>
+ * Copyright (C) 2016 Christian Schabesberger <chris.schabesberger@mailbox.org>
  * YoutubeParsingHelper.java is part of NewPipe Extractor.
  *
  * NewPipe Extractor is free software: you can redistribute it and/or modify
@@ -33,6 +33,9 @@ import com.grack.nanojson.JsonParser;
 import com.grack.nanojson.JsonParserException;
 import com.grack.nanojson.JsonWriter;
 import org.jsoup.nodes.Entities;
+
+import org.schabi.newpipe.extractor.Image;
+import org.schabi.newpipe.extractor.Image.ResolutionLevel;
 import org.schabi.newpipe.extractor.MetaInfo;
 import org.schabi.newpipe.extractor.downloader.Response;
 import org.schabi.newpipe.extractor.exceptions.AccountTerminatedException;
@@ -55,7 +58,6 @@ import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
-import java.security.SecureRandom;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
@@ -70,6 +72,7 @@ import java.util.Optional;
 import java.util.Random;
 import java.util.Set;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import javax.annotation.Nonnull;
@@ -234,7 +237,7 @@ public final class YoutubeParsingHelper {
      */
     private static final String IOS_DEVICE_MODEL = "iPhone14,5";
 
-    private static Random numberGenerator = new SecureRandom();
+    private static Random numberGenerator = new Random();
 
     private static final String FEED_BASE_CHANNEL_ID =
             "https://www.youtube.com/feeds/videos.xml?channel_id=";
@@ -1134,15 +1137,59 @@ public final class YoutubeParsingHelper {
         return result;
     }
 
-    public static String getThumbnailUrlFromInfoItem(final JsonObject infoItem)
+    /**
+     * Get thumbnails from a {@link JsonObject} representing a YouTube
+     * {@link org.schabi.newpipe.extractor.InfoItem InfoItem}.
+     *
+     * <p>
+     * Thumbnails are got from the {@code thumbnails} {@link JsonArray} inside the {@code thumbnail}
+     * {@link JsonObject} of the YouTube {@link org.schabi.newpipe.extractor.InfoItem InfoItem},
+     * using {@link #getImagesFromThumbnailsArray(JsonArray)}.
+     * </p>
+     *
+     * @param infoItem a YouTube {@link org.schabi.newpipe.extractor.InfoItem InfoItem}
+     * @return an unmodifiable list of {@link Image}s found in the {@code thumbnails}
+     * {@link JsonArray}
+     * @throws ParsingException if an exception occurs when
+     *                          {@link #getImagesFromThumbnailsArray(JsonArray)} is executed
+     */
+    @Nonnull
+    public static List<Image> getThumbnailsFromInfoItem(@Nonnull final JsonObject infoItem)
             throws ParsingException {
-        // TODO: Don't simply get the first item, but look at all thumbnails and their resolution
         try {
-            return fixThumbnailUrl(infoItem.getObject("thumbnail").getArray("thumbnails")
-                    .getObject(0).getString("url"));
+            return getImagesFromThumbnailsArray(infoItem.getObject("thumbnail")
+                    .getArray("thumbnails"));
         } catch (final Exception e) {
-            throw new ParsingException("Could not get thumbnail url", e);
+            throw new ParsingException("Could not get thumbnails from InfoItem", e);
         }
+    }
+
+    /**
+     * Get images from a YouTube {@code thumbnails} {@link JsonArray}.
+     *
+     * <p>
+     * The properties of the {@link Image}s created will be set using the corresponding ones of
+     * thumbnail items.
+     * </p>
+     *
+     * @param thumbnails a YouTube {@code thumbnails} {@link JsonArray}
+     * @return an unmodifiable list of {@link Image}s extracted from the given {@link JsonArray}
+     */
+    @Nonnull
+    public static List<Image> getImagesFromThumbnailsArray(
+            @Nonnull final JsonArray thumbnails) {
+        return thumbnails.stream()
+                .filter(JsonObject.class::isInstance)
+                .map(JsonObject.class::cast)
+                .filter(thumbnail -> !isNullOrEmpty(thumbnail.getString("url")))
+                .map(thumbnail -> {
+                    final int height = thumbnail.getInt("height", Image.HEIGHT_UNKNOWN);
+                    return new Image(fixThumbnailUrl(thumbnail.getString("url")),
+                            height,
+                            thumbnail.getInt("width", Image.WIDTH_UNKNOWN),
+                            ResolutionLevel.fromHeight(height));
+                })
+                .collect(Collectors.toUnmodifiableList());
     }
 
     @Nonnull
@@ -1231,8 +1278,17 @@ public final class YoutubeParsingHelper {
             @Nonnull final Localization localization,
             @Nonnull final ContentCountry contentCountry)
             throws IOException, ExtractionException {
+        return prepareDesktopJsonBuilder(localization, contentCountry, null);
+    }
+
+    @Nonnull
+    public static JsonBuilder<JsonObject> prepareDesktopJsonBuilder(
+            @Nonnull final Localization localization,
+            @Nonnull final ContentCountry contentCountry,
+            @Nullable final String visitorData)
+            throws IOException, ExtractionException {
         // @formatter:off
-        return JsonObject.builder()
+        final JsonBuilder<JsonObject> builder = JsonObject.builder()
                 .object("context")
                     .object("client")
                         .value("hl", localization.getLocalizationCode())
@@ -1240,8 +1296,13 @@ public final class YoutubeParsingHelper {
                         .value("clientName", "WEB")
                         .value("clientVersion", getClientVersion())
                         .value("originalUrl", "https://www.youtube.com")
-                        .value("platform", "DESKTOP")
-                    .end()
+                        .value("platform", "DESKTOP");
+
+        if (visitorData != null) {
+            builder.value("visitorData", visitorData);
+        }
+
+        return builder.end()
                     .object("request")
                         .array("internalExperimentFlags")
                         .end()
@@ -1358,7 +1419,7 @@ public final class YoutubeParsingHelper {
             @Nonnull final Localization localization,
             @Nonnull final ContentCountry contentCountry,
             @Nonnull final String videoId,
-            @Nonnull final String sts,
+            @Nonnull final Integer sts,
             final boolean isTvHtml5DesktopJsonBuilder,
             @Nonnull final String contentPlaybackNonce) throws IOException, ExtractionException {
         // @formatter:off

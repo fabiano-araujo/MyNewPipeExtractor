@@ -9,8 +9,10 @@ import com.grack.nanojson.JsonObject;
 import com.grack.nanojson.JsonParser;
 import com.grack.nanojson.JsonParserException;
 
+import org.schabi.newpipe.extractor.Image;
 import org.schabi.newpipe.extractor.InfoItem;
 import org.schabi.newpipe.extractor.MetaInfo;
+import org.schabi.newpipe.extractor.MultiInfoItemsCollector;
 import org.schabi.newpipe.extractor.Page;
 import org.schabi.newpipe.extractor.StreamingService;
 import org.schabi.newpipe.extractor.channel.ChannelInfoItem;
@@ -18,7 +20,6 @@ import org.schabi.newpipe.extractor.channel.ChannelInfoItemExtractor;
 import org.schabi.newpipe.extractor.downloader.Downloader;
 import org.schabi.newpipe.extractor.exceptions.ExtractionException;
 import org.schabi.newpipe.extractor.linkhandler.SearchQueryHandler;
-import org.schabi.newpipe.extractor.MultiInfoItemsCollector;
 import org.schabi.newpipe.extractor.search.SearchExtractor;
 import org.schabi.newpipe.extractor.services.media_ccc.extractors.infoItems.MediaCCCStreamInfoItemExtractor;
 import org.schabi.newpipe.extractor.services.media_ccc.linkHandler.MediaCCCConferencesListLinkHandlerFactory;
@@ -38,7 +39,8 @@ public class MediaCCCSearchExtractor extends SearchExtractor {
         super(service, linkHandler);
         try {
             conferenceKiosk = new MediaCCCConferenceKiosk(service,
-                    new MediaCCCConferencesListLinkHandlerFactory().fromId("conferences"),
+                    MediaCCCConferencesListLinkHandlerFactory.getInstance()
+                            .fromId("conferences"),
                     "conferences");
         } catch (final Exception e) {
             e.printStackTrace();
@@ -156,9 +158,10 @@ public class MediaCCCSearchExtractor extends SearchExtractor {
                         return item.getUrl();
                     }
 
+                    @Nonnull
                     @Override
-                    public String getThumbnailUrl() {
-                        return item.getThumbnailUrl();
+                    public List<Image> getThumbnails() {
+                        return item.getThumbnails();
                     }
                 });
             }
