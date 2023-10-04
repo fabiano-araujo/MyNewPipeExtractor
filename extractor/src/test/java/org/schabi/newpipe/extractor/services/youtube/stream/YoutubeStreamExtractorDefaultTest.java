@@ -1,7 +1,7 @@
 /*
  * Created by Christian Schabesberger on 30.12.15.
  *
- * Copyright (C) Christian Schabesberger 2015 <chris.schabesberger@mailbox.org>
+ * Copyright (C) 2015 Christian Schabesberger <chris.schabesberger@mailbox.org>
  * YoutubeVideoExtractorDefault.java is part of NewPipe Extractor.
  *
  * NewPipe Extractor is free software: you can redistribute it and/or modify
@@ -50,7 +50,6 @@ import org.schabi.newpipe.extractor.stream.Description;
 import org.schabi.newpipe.extractor.stream.StreamExtractor;
 import org.schabi.newpipe.extractor.stream.StreamSegment;
 import org.schabi.newpipe.extractor.stream.StreamType;
-import org.schabi.newpipe.extractor.utils.LocaleCompat;
 
 import java.io.IOException;
 import java.net.MalformedURLException;
@@ -491,8 +490,8 @@ public class YoutubeStreamExtractorDefaultTest {
 
         @Test
         @Override
-        public void testUploaderAvatarUrl() {
-            assertThrows(ParsingException.class, () -> extractor.getUploaderAvatarUrl());
+        public void testUploaderAvatars() {
+            assertThrows(ParsingException.class, () -> extractor.getUploaderAvatars());
         }
     }
 
@@ -560,7 +559,7 @@ public class YoutubeStreamExtractorDefaultTest {
                     .anyMatch(audioStream ->
                             "English original".equals(audioStream.getAudioTrackName())));
 
-            final Locale hindiLocale = LocaleCompat.forLanguageTag("hi");
+            final Locale hindiLocale = Locale.forLanguageTag("hi");
             assertTrue(audioStreams.stream()
                     .anyMatch(audioStream ->
                             Objects.equals(audioStream.getAudioLocale(), hindiLocale)));

@@ -2,11 +2,11 @@ package org.schabi.newpipe.extractor.services.youtube;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.schabi.newpipe.extractor.ExtractorAsserts.assertContains;
-import static org.schabi.newpipe.extractor.ExtractorAsserts.assertIsSecureUrl;
+import static org.schabi.newpipe.extractor.ExtractorAsserts.assertEmpty;
+import static org.schabi.newpipe.extractor.ExtractorAsserts.assertNotBlank;
 import static org.schabi.newpipe.extractor.ExtractorAsserts.assertTabsContain;
 import static org.schabi.newpipe.extractor.ServiceList.YouTube;
 import static org.schabi.newpipe.extractor.services.DefaultTests.defaultTestGetPageInNewExtractor;
@@ -202,17 +202,13 @@ public class YoutubeChannelExtractorTest {
         }
 
         @Test
-        public void testAvatarUrl() throws Exception {
-            String avatarUrl = extractor.getAvatarUrl();
-            assertIsSecureUrl(avatarUrl);
-            assertContains("yt3", avatarUrl);
+        public void testAvatars() throws Exception {
+            YoutubeTestsUtils.testImages(extractor.getAvatars());
         }
 
         @Test
-        public void testBannerUrl() throws Exception {
-            String bannerUrl = extractor.getBannerUrl();
-            assertIsSecureUrl(bannerUrl);
-            assertContains("yt3", bannerUrl);
+        public void testBanners() throws Exception {
+            YoutubeTestsUtils.testImages(extractor.getBanners());
         }
 
         @Test
@@ -225,6 +221,7 @@ public class YoutubeChannelExtractorTest {
             ExtractorAsserts.assertGreaterOrEqual(4_900_000, extractor.getSubscriberCount());
         }
 
+        @Test
         @Override
         public void testVerified() throws Exception {
             assertTrue(extractor.isVerified());
@@ -247,7 +244,7 @@ public class YoutubeChannelExtractorTest {
         }
     }
 
-    // Youtube RED/Premium ad blocking test
+    // YouTube RED/Premium ad blocking test
     public static class VSauce implements BaseChannelExtractorTest {
         private static YoutubeChannelExtractor extractor;
 
@@ -299,17 +296,13 @@ public class YoutubeChannelExtractorTest {
         }
 
         @Test
-        public void testAvatarUrl() throws Exception {
-            String avatarUrl = extractor.getAvatarUrl();
-            assertIsSecureUrl(avatarUrl);
-            assertContains("yt3", avatarUrl);
+        public void testAvatars() throws Exception {
+            YoutubeTestsUtils.testImages(extractor.getAvatars());
         }
 
         @Test
-        public void testBannerUrl() throws Exception {
-            String bannerUrl = extractor.getBannerUrl();
-            assertIsSecureUrl(bannerUrl);
-            assertContains("yt3", bannerUrl);
+        public void testBanners() throws Exception {
+            YoutubeTestsUtils.testImages(extractor.getBanners());
         }
 
         @Test
@@ -399,17 +392,13 @@ public class YoutubeChannelExtractorTest {
         }
 
         @Test
-        public void testAvatarUrl() throws Exception {
-            String avatarUrl = extractor.getAvatarUrl();
-            assertIsSecureUrl(avatarUrl);
-            assertContains("yt3", avatarUrl);
+        public void testAvatars() throws Exception {
+            YoutubeTestsUtils.testImages(extractor.getAvatars());
         }
 
         @Test
-        public void testBannerUrl() throws Exception {
-            String bannerUrl = extractor.getBannerUrl();
-            assertIsSecureUrl(bannerUrl);
-            assertContains("yt3", bannerUrl);
+        public void testBanners() throws Exception {
+            YoutubeTestsUtils.testImages(extractor.getBanners());
         }
 
         @Test
@@ -523,17 +512,13 @@ public class YoutubeChannelExtractorTest {
         }
 
         @Test
-        public void testAvatarUrl() throws Exception {
-            String avatarUrl = extractor.getAvatarUrl();
-            assertIsSecureUrl(avatarUrl);
-            assertContains("yt3", avatarUrl);
+        public void testAvatars() throws Exception {
+            YoutubeTestsUtils.testImages(extractor.getAvatars());
         }
 
         @Test
-        public void testBannerUrl() throws Exception {
-            String bannerUrl = extractor.getBannerUrl();
-            assertIsSecureUrl(bannerUrl);
-            assertContains("yt3", bannerUrl);
+        public void testBanners() throws Exception {
+            YoutubeTestsUtils.testImages(extractor.getBanners());
         }
 
         @Test
@@ -620,17 +605,13 @@ public class YoutubeChannelExtractorTest {
         }
 
         @Test
-        public void testAvatarUrl() throws Exception {
-            String avatarUrl = extractor.getAvatarUrl();
-            assertIsSecureUrl(avatarUrl);
-            assertContains("yt3", avatarUrl);
+        public void testAvatars() throws Exception {
+            YoutubeTestsUtils.testImages(extractor.getAvatars());
         }
 
         @Test
-        public void testBannerUrl() throws Exception {
-            String bannerUrl = extractor.getBannerUrl();
-            assertIsSecureUrl(bannerUrl);
-            assertContains("yt3", bannerUrl);
+        public void testBanners() throws Exception {
+            YoutubeTestsUtils.testImages(extractor.getBanners());
         }
 
         @Test
@@ -688,7 +669,7 @@ public class YoutubeChannelExtractorTest {
 
         @Test
         public void testName() throws Exception {
-            assertEquals(extractor.getName(), "Coachella");
+            assertEquals("Coachella", extractor.getName());
         }
 
         @Test
@@ -710,21 +691,21 @@ public class YoutubeChannelExtractorTest {
         // ChannelExtractor
         //////////////////////////////////////////////////////////////////////////*/
 
+        @Test
         @Override
         public void testDescription() throws ParsingException {
+            assertNotBlank(extractor.getDescription());
         }
 
         @Test
-        public void testAvatarUrl() throws Exception {
-            String avatarUrl = extractor.getAvatarUrl();
-            assertIsSecureUrl(avatarUrl);
-            assertContains("yt3", avatarUrl);
+        public void testAvatars() throws Exception {
+            YoutubeTestsUtils.testImages(extractor.getAvatars());
         }
 
         @Test
-        public void testBannerUrl() throws Exception {
-            // CarouselHeaderRenders do not contain a banner
-            assertNull(extractor.getBannerUrl());
+        public void testBanners() {
+            // A CarouselHeaderRenderer doesn't contain a banner
+            assertEmpty(extractor.getBanners());
         }
 
         @Test
@@ -792,17 +773,15 @@ public class YoutubeChannelExtractorTest {
 
         @Test
         @Override
-        public void testAvatarUrl() throws Exception {
-            final String avatarUrl = extractor.getAvatarUrl();
-            assertIsSecureUrl(avatarUrl);
-            assertContains("yt3", avatarUrl);
+        public void testAvatars() throws Exception {
+            YoutubeTestsUtils.testImages(extractor.getAvatars());
         }
 
         @Test
         @Override
-        public void testBannerUrl() throws Exception {
+        public void testBanners() throws Exception {
             // Banners cannot be extracted from age-restricted channels
-            assertTrue(isNullOrEmpty(extractor.getBannerUrl()));
+            assertEmpty(extractor.getBanners());
         }
 
         @Test
@@ -883,6 +862,107 @@ public class YoutubeChannelExtractorTest {
         public void testTags() throws Exception {
             // Tags cannot be extracted from age-restricted channels
             assertTrue(extractor.getTags().isEmpty());
+        }
+    }
+
+    static class InteractiveTabbedHeader implements BaseChannelExtractorTest {
+
+        private static ChannelExtractor extractor;
+
+        @BeforeAll
+        static void setUp() throws Exception {
+            YoutubeTestsUtils.ensureStateless();
+            NewPipe.init(DownloaderFactory.getDownloader(RESOURCE_PATH + "interactiveTabbedHeader"));
+            extractor = YouTube.getChannelExtractor(
+                    "https://www.youtube.com/channel/UCQvWX73GQygcwXOTSf_VDVg");
+            extractor.fetchPage();
+        }
+
+        @Test
+        @Override
+        public void testDescription() throws Exception {
+            final String description = extractor.getDescription();
+            assertContains("Minecraft", description);
+            assertContains("game", description);
+            assertContains("Mojang", description);
+        }
+
+        @Test
+        @Override
+        public void testAvatars() throws Exception {
+            YoutubeTestsUtils.testImages(extractor.getAvatars());
+        }
+
+        @Test
+        @Override
+        public void testBanners() throws Exception {
+            YoutubeTestsUtils.testImages(extractor.getBanners());
+        }
+
+        @Test
+        @Override
+        public void testFeedUrl() throws Exception {
+            assertEquals(
+                    "https://www.youtube.com/feeds/videos.xml?channel_id=UCQvWX73GQygcwXOTSf_VDVg",
+                    extractor.getFeedUrl());
+        }
+
+        @Test
+        @Override
+        public void testSubscriberCount() throws Exception {
+            // Subscriber count is not available on channels with an interactiveTabbedHeaderRenderer
+            assertEquals(ChannelExtractor.UNKNOWN_SUBSCRIBER_COUNT, extractor.getSubscriberCount());
+        }
+
+        @Test
+        @Override
+        public void testVerified() throws Exception {
+            assertTrue(extractor.isVerified());
+        }
+
+        @Test
+        @Override
+        public void testTabs() throws Exception {
+            // Gaming topic channels tabs are not yet supported, so an empty list should be returned
+            assertTrue(extractor.getTabs().isEmpty());
+        }
+
+        @Test
+        @Override
+        public void testTags() throws Exception {
+            assertTrue(extractor.getTags().isEmpty());
+        }
+
+        @Test
+        @Override
+        public void testServiceId() throws Exception {
+            assertEquals(YouTube.getServiceId(), extractor.getServiceId());
+        }
+
+        @Test
+        @Override
+        public void testName() throws Exception {
+            assertContains("Minecraft", extractor.getName());
+        }
+
+        @Test
+        @Override
+        public void testId() throws Exception {
+            assertEquals("UCQvWX73GQygcwXOTSf_VDVg", extractor.getId());
+        }
+
+        @Test
+        @Override
+        public void testUrl() throws Exception {
+            assertEquals("https://www.youtube.com/channel/UCQvWX73GQygcwXOTSf_VDVg",
+                    extractor.getUrl());
+        }
+
+        @Test
+        @Override
+        public void testOriginalUrl() throws Exception {
+            assertEquals("https://www.youtube.com/channel/UCQvWX73GQygcwXOTSf_VDVg",
+                    extractor.getOriginalUrl());
         }
     }
 }
