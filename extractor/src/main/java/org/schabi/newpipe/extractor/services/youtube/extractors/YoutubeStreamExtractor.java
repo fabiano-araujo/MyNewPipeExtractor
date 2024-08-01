@@ -833,17 +833,19 @@ public class YoutubeStreamExtractor extends StreamExtractor {
 
         // The microformat JSON object of the content is only returned on the WEB client,
         // so we need to store it instead of getting it directly from the playerResponse
-        playerMicroFormatRenderer = webPlayerResponse.getObject("microformat")
-                .getObject("playerMicroformatRenderer");
+        if (userNextResponse) {
+            playerMicroFormatRenderer = webPlayerResponse.getObject("microformat")
+                    .getObject("playerMicroformatRenderer");
 
-        final byte[] body = JsonWriter.string(
-                prepareDesktopJsonBuilder(localization, contentCountry)
-                        .value(VIDEO_ID, videoId)
-                        .value(CONTENT_CHECK_OK, true)
-                        .value(RACY_CHECK_OK, true)
-                        .done())
-                .getBytes(StandardCharsets.UTF_8);
-        nextResponse = getJsonPostResponse(NEXT, body, localization);
+            final byte[] body = JsonWriter.string(
+                            prepareDesktopJsonBuilder(localization, contentCountry)
+                                    .value(VIDEO_ID, videoId)
+                                    .value(CONTENT_CHECK_OK, true)
+                                    .value(RACY_CHECK_OK, true)
+                                    .done())
+                    .getBytes(StandardCharsets.UTF_8);
+            nextResponse = getJsonPostResponse(NEXT, body, localization);
+        }
     }
 
     private void checkPlayabilityStatus(final JsonObject youtubePlayerResponse,
