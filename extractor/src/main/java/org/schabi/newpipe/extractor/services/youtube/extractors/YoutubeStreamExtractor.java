@@ -765,6 +765,10 @@ public class YoutubeStreamExtractor extends StreamExtractor {
     private static final String CIPHER = "cipher";
     public static boolean userNextResponse = false;
 
+    public static boolean userIF1 = false;
+    public static boolean userIF2 = false;
+
+
     @Override
     public void onFetchPage(@Nonnull final Downloader downloader)
             throws IOException, ExtractionException {
@@ -820,14 +824,19 @@ public class YoutubeStreamExtractor extends StreamExtractor {
         } else {
             checkPlayabilityStatus(webPlayerResponse, playabilityStatus);
 
-            // Fetching successfully the iOS player is mandatory to get streams
-            fetchIosMobileJsonPlayer(contentCountry, localization, videoId);
+            // Fetching successfully the iOS player is mandatory to get streams7
+            if(userIF1) {
+                fetchIosMobileJsonPlayer(contentCountry, localization, videoId);
+            }
 
-            try {
-                fetchAndroidMobileJsonPlayer(contentCountry, localization, videoId);
-            } catch (final Exception ignored) {
-                // Ignore exceptions related to ANDROID client fetch or parsing, as it is not
-                // compulsory to play contents
+
+            if(userIF2) {
+                try {
+                    fetchAndroidMobileJsonPlayer(contentCountry, localization, videoId);
+                } catch (final Exception ignored) {
+                    // Ignore exceptions related to ANDROID client fetch or parsing, as it is not
+                    // compulsory to play contents
+                }
             }
         }
 
