@@ -764,12 +764,17 @@ public class YoutubeStreamExtractor extends StreamExtractor {
     private static final String SIGNATURE_CIPHER = "signatureCipher";
     private static final String CIPHER = "cipher";
     public static boolean runOnlyStreamLink = false;
+    public static boolean runOnlySugestion = false;
 
     @Override
     public void onFetchPage(@Nonnull final Downloader downloader)
             throws IOException, ExtractionException {
         if (runOnlyStreamLink) {
             onlyStreamLink();
+            return;
+        }
+        if (runOnlySugestion) {
+            onlySugestion();
             return;
         }
         final String videoId = getId();
@@ -839,6 +844,22 @@ public class YoutubeStreamExtractor extends StreamExtractor {
         // so we need to store it instead of getting it directly from the playerResponse
         playerMicroFormatRenderer = webPlayerResponse.getObject("microformat")
                 .getObject("playerMicroformatRenderer");
+
+        final byte[] body = JsonWriter.string(
+                        prepareDesktopJsonBuilder(localization, contentCountry)
+                                .value(VIDEO_ID, videoId)
+                                .value(CONTENT_CHECK_OK, true)
+                                .value(RACY_CHECK_OK, true)
+                                .done())
+                .getBytes(StandardCharsets.UTF_8);
+        nextResponse = getJsonPostResponse(NEXT, body, localization);
+    }
+
+    private void onlySugestion() throws ExtractionException, IOException {
+        final String videoId = getId();
+
+        final Localization localization = getExtractorLocalization();
+        final ContentCountry contentCountry = getExtractorContentCountry();
 
         final byte[] body = JsonWriter.string(
                         prepareDesktopJsonBuilder(localization, contentCountry)
