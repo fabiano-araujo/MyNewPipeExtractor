@@ -776,84 +776,20 @@ public class YoutubeStreamExtractor extends StreamExtractor {
 
         final Localization localization = getExtractorLocalization();
         final ContentCountry contentCountry = getExtractorContentCountry();
+       // checkPlayabilityStatus(webPlayerResponse, playabilityStatus);
 
-        final JsonObject webPlayerResponse = YoutubeParsingHelper.getWebPlayerResponse(
-                localization, contentCountry, videoId);
-
-        if (isPlayerResponseNotValid(webPlayerResponse, videoId)) {
-            // Check the playability status, as private and deleted videos and invalid video IDs do
-            // not return the ID provided in the player response
-            // When the requested video is playable and a different video ID is returned, it has
-            // the OK playability status, meaning the ExtractionException after this check will be
-            // thrown
-            checkPlayabilityStatus(
-                    webPlayerResponse, webPlayerResponse.getObject("playabilityStatus"));
-            throw new ExtractionException("Initial WEB player response is not valid");
+        // Fetching successfully the iOS player is mandatory to get streams7
+        if(userIF1) {
+            fetchIosMobileJsonPlayer(contentCountry, localization, videoId);
         }
 
-        // Save the webPlayerResponse into playerResponse in the case the video cannot be played,
-        // so some metadata can be retrieved
-        playerResponse = webPlayerResponse;
-
-        // Use the player response from the player endpoint of the desktop internal API because
-        // there can be restrictions on videos in the embedded player.
-        // E.g. if a video is age-restricted, the embedded player's playabilityStatus says that
-        // the video cannot be played outside of YouTube, but does not show the original message.
-        final JsonObject playabilityStatus = webPlayerResponse.getObject("playabilityStatus");
-
-        final boolean isAgeRestricted = "login_required".equalsIgnoreCase(
-                playabilityStatus.getString("status"))
-                && playabilityStatus.getString("reason", "")
-                .contains("age");
-
-        setStreamType();
-
-        if (isAgeRestricted) {
-            fetchTvHtml5EmbedJsonPlayer(contentCountry, localization, videoId);
-
-            // If no streams can be fetched in the TVHTML5 simply embed client, the video should be
-            // age-restricted, therefore throw an AgeRestrictedContentException explicitly.
-            if (tvHtml5SimplyEmbedStreamingData == null) {
-                throw new AgeRestrictedContentException(
-                        "This age-restricted video cannot be watched.");
+        if(userIF2) {
+            try {
+                fetchAndroidMobileJsonPlayer(contentCountry, localization, videoId);
+            } catch (final Exception ignored) {
+                // Ignore exceptions related to ANDROID client fetch or parsing, as it is not
+                // compulsory to play contents
             }
-
-            // Refresh the stream type because the stream type may be not properly known for
-            // age-restricted videos
-            setStreamType();
-        } else {
-            checkPlayabilityStatus(webPlayerResponse, playabilityStatus);
-
-            // Fetching successfully the iOS player is mandatory to get streams7
-            if(userIF1) {
-                fetchIosMobileJsonPlayer(contentCountry, localization, videoId);
-            }
-
-
-            if(userIF2) {
-                try {
-                    fetchAndroidMobileJsonPlayer(contentCountry, localization, videoId);
-                } catch (final Exception ignored) {
-                    // Ignore exceptions related to ANDROID client fetch or parsing, as it is not
-                    // compulsory to play contents
-                }
-            }
-        }
-
-        // The microformat JSON object of the content is only returned on the WEB client,
-        // so we need to store it instead of getting it directly from the playerResponse
-        if (userNextResponse) {
-            playerMicroFormatRenderer = webPlayerResponse.getObject("microformat")
-                    .getObject("playerMicroformatRenderer");
-
-            final byte[] body = JsonWriter.string(
-                            prepareDesktopJsonBuilder(localization, contentCountry)
-                                    .value(VIDEO_ID, videoId)
-                                    .value(CONTENT_CHECK_OK, true)
-                                    .value(RACY_CHECK_OK, true)
-                                    .done())
-                    .getBytes(StandardCharsets.UTF_8);
-            nextResponse = getJsonPostResponse(NEXT, body, localization);
         }
     }
 
