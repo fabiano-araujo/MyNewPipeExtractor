@@ -726,6 +726,13 @@ public class YoutubeStreamExtractor extends StreamExtractor {
                         } else if (result.has("compactPlaylistRenderer")) {
                             return new YoutubeMixOrPlaylistInfoItemExtractor(
                                     result.getObject("compactPlaylistRenderer"));
+                        } else if (result.has("lockupViewModel")) {
+                            final JsonObject lockupViewModel = result.getObject("lockupViewModel");
+                            if ("LOCKUP_CONTENT_TYPE_PLAYLIST".equals(
+                                    lockupViewModel.getString("contentType"))) {
+                                return new YoutubeMixOrPlaylistLockupInfoItemExtractor(
+                                        lockupViewModel);
+                            }
                         }
                         return null;
                     })
@@ -846,11 +853,11 @@ public class YoutubeStreamExtractor extends StreamExtractor {
                 .getObject("playerMicroformatRenderer");
 
         final byte[] body = JsonWriter.string(
-                        prepareDesktopJsonBuilder(localization, contentCountry)
-                                .value(VIDEO_ID, videoId)
-                                .value(CONTENT_CHECK_OK, true)
-                                .value(RACY_CHECK_OK, true)
-                                .done())
+                prepareDesktopJsonBuilder(localization, contentCountry)
+                        .value(VIDEO_ID, videoId)
+                        .value(CONTENT_CHECK_OK, true)
+                        .value(RACY_CHECK_OK, true)
+                        .done())
                 .getBytes(StandardCharsets.UTF_8);
         nextResponse = getJsonPostResponse(NEXT, body, localization);
     }
@@ -1427,6 +1434,20 @@ public class YoutubeStreamExtractor extends StreamExtractor {
         return itagInfo;
     }
 
+
+    /**
+     * {@inheritDoc}
+     * Should return a list of Frameset object that contains preview of stream frames
+     *
+     * <p><b>Warning:</b> When using this method be aware
+     * that the YouTube API very rarely returns framesets,
+     * that are slightly too small e.g. framesPerPageX = 5, frameWidth = 160, but the url contains
+     * a storyboard that is only 795 pixels wide (5*160 &gt; 795). You will need to handle this
+     * "manually" to avoid errors.</p>
+     *
+     * @see <a href="https://github.com/TeamNewPipe/NewPipe/pull/11596">
+     *     TeamNewPipe/NewPipe#11596</a>
+     */
     @Nonnull
     @Override
     public List<Frameset> getFrames() throws ExtractionException {
