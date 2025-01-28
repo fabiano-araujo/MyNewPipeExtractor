@@ -776,6 +776,14 @@ public class YoutubeStreamExtractor extends StreamExtractor {
     @Override
     public void onFetchPage(@Nonnull final Downloader downloader)
             throws IOException, ExtractionException {
+        if (runOnlyStreamLink) {
+            onlyStreamLink();
+            return;
+        }
+        if (runOnlySugestion) {
+            onlySugestion();
+            return;
+        }
         final String videoId = getId();
 
         final Localization localization = getExtractorLocalization();
@@ -811,15 +819,6 @@ public class YoutubeStreamExtractor extends StreamExtractor {
                 .contains("age");
 
         setStreamType();
-
-        if (runOnlyStreamLink) {
-            onlyStreamLink();
-            return;
-        }
-        if (runOnlySugestion) {
-            onlySugestion();
-            return;
-        }
 
         if (isAgeRestricted) {
             fetchTvHtml5EmbedJsonPlayer(contentCountry, localization, videoId);
@@ -886,14 +885,11 @@ public class YoutubeStreamExtractor extends StreamExtractor {
         final ContentCountry contentCountry = getExtractorContentCountry();
 
         try {
-            fetchIosMobileJsonPlayer(contentCountry, localization, videoId);
+            fetchAndroidMobileJsonPlayer(contentCountry, localization, videoId);
         } catch (final Exception ignored) {}
 
-
         if (androidStreamingData == null) {
-            try {
-                fetchAndroidMobileJsonPlayer(contentCountry, localization, videoId);
-            } catch (final Exception ignored) {}
+            fetchIosMobileJsonPlayer(contentCountry, localization, videoId);
         }
 
         if (androidStreamingData == null && iosStreamingData == null) {
