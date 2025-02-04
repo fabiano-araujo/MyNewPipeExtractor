@@ -776,14 +776,6 @@ public class YoutubeStreamExtractor extends StreamExtractor {
     @Override
     public void onFetchPage(@Nonnull final Downloader downloader)
             throws IOException, ExtractionException {
-        if (runOnlyStreamLink) {
-            onlyStreamLink();
-            return;
-        }
-        if (runOnlySugestion) {
-            onlySugestion();
-            return;
-        }
         final String videoId = getId();
 
         final Localization localization = getExtractorLocalization();
@@ -853,22 +845,6 @@ public class YoutubeStreamExtractor extends StreamExtractor {
                 .getObject("playerMicroformatRenderer");
 
         final byte[] body = JsonWriter.string(
-                prepareDesktopJsonBuilder(localization, contentCountry)
-                        .value(VIDEO_ID, videoId)
-                        .value(CONTENT_CHECK_OK, true)
-                        .value(RACY_CHECK_OK, true)
-                        .done())
-                .getBytes(StandardCharsets.UTF_8);
-        nextResponse = getJsonPostResponse(NEXT, body, localization);
-    }
-
-    private void onlySugestion() throws ExtractionException, IOException {
-        final String videoId = getId();
-
-        final Localization localization = getExtractorLocalization();
-        final ContentCountry contentCountry = getExtractorContentCountry();
-
-        final byte[] body = JsonWriter.string(
                         prepareDesktopJsonBuilder(localization, contentCountry)
                                 .value(VIDEO_ID, videoId)
                                 .value(CONTENT_CHECK_OK, true)
@@ -876,30 +852,6 @@ public class YoutubeStreamExtractor extends StreamExtractor {
                                 .done())
                 .getBytes(StandardCharsets.UTF_8);
         nextResponse = getJsonPostResponse(NEXT, body, localization);
-    }
-
-    private void onlyStreamLink() throws IOException, ExtractionException{
-        System.out.println("onlyStreamLink");
-        final String videoId = getId();
-        final Localization localization = getExtractorLocalization();
-        final ContentCountry contentCountry = getExtractorContentCountry();
-
-        try {
-            fetchAndroidMobileJsonPlayer(contentCountry, localization, videoId);
-        } catch (final Exception ignored) {}
-
-        if (androidStreamingData == null) {
-            fetchIosMobileJsonPlayer(contentCountry, localization, videoId);
-        }
-
-        if (androidStreamingData == null && iosStreamingData == null) {
-            fetchTvHtml5EmbedJsonPlayer(contentCountry, localization, videoId);
-            if (tvHtml5SimplyEmbedStreamingData == null) {
-                throw new AgeRestrictedContentException(
-                        "This age-restricted video cannot be watched.");
-            }
-            setStreamType();
-        }
     }
 
     private void checkPlayabilityStatus(final JsonObject youtubePlayerResponse,
@@ -965,16 +917,16 @@ public class YoutubeStreamExtractor extends StreamExtractor {
             throws IOException, ExtractionException {
         androidCpn = generateContentPlaybackNonce();
         final byte[] mobileBody = JsonWriter.string(
-                prepareAndroidMobileJsonBuilder(localization, contentCountry)
-                        .object("playerRequest")
-                            .value(VIDEO_ID, videoId)
-                        .end()
-                        .value("disablePlayerResponse", false)
-                        .value(VIDEO_ID, videoId)
-                        .value(CPN, androidCpn)
-                        .value(CONTENT_CHECK_OK, true)
-                        .value(RACY_CHECK_OK, true)
-                        .done())
+                        prepareAndroidMobileJsonBuilder(localization, contentCountry)
+                                .object("playerRequest")
+                                .value(VIDEO_ID, videoId)
+                                .end()
+                                .value("disablePlayerResponse", false)
+                                .value(VIDEO_ID, videoId)
+                                .value(CPN, androidCpn)
+                                .value(CONTENT_CHECK_OK, true)
+                                .value(RACY_CHECK_OK, true)
+                                .done())
                 .getBytes(StandardCharsets.UTF_8);
 
         final JsonObject androidPlayerResponse = getJsonAndroidPostResponse(
@@ -1008,12 +960,12 @@ public class YoutubeStreamExtractor extends StreamExtractor {
             throws IOException, ExtractionException {
         iosCpn = generateContentPlaybackNonce();
         final byte[] mobileBody = JsonWriter.string(
-                prepareIosMobileJsonBuilder(localization, contentCountry)
-                        .value(VIDEO_ID, videoId)
-                        .value(CPN, iosCpn)
-                        .value(CONTENT_CHECK_OK, true)
-                        .value(RACY_CHECK_OK, true)
-                        .done())
+                        prepareIosMobileJsonBuilder(localization, contentCountry)
+                                .value(VIDEO_ID, videoId)
+                                .value(CPN, iosCpn)
+                                .value(CONTENT_CHECK_OK, true)
+                                .value(RACY_CHECK_OK, true)
+                                .done())
                 .getBytes(StandardCharsets.UTF_8);
 
         final JsonObject iosPlayerResponse = getJsonIosPostResponse(PLAYER,
@@ -1166,10 +1118,10 @@ public class YoutubeStreamExtractor extends StreamExtractor {
                     As age-restricted videos are not common, use tvHtml5SimplyEmbedStreamingData
                     last, which will be the only one not empty for age-restricted content
                      */
-                    new Pair<>(iosStreamingData, iosCpn),
-                    new Pair<>(androidStreamingData, androidCpn),
-                    new Pair<>(tvHtml5SimplyEmbedStreamingData, tvHtml5SimplyEmbedCpn)
-            )
+                            new Pair<>(iosStreamingData, iosCpn),
+                            new Pair<>(androidStreamingData, androidCpn),
+                            new Pair<>(tvHtml5SimplyEmbedStreamingData, tvHtml5SimplyEmbedCpn)
+                    )
                     .flatMap(pair -> getStreamsFromStreamingDataKey(videoId, pair.getFirst(),
                             streamingDataKey, itagTypeWanted, pair.getSecond()))
                     .map(streamBuilderHelper)
