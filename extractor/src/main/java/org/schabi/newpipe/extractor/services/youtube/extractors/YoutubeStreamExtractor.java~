@@ -829,15 +829,14 @@ public class YoutubeStreamExtractor extends StreamExtractor {
             checkPlayabilityStatus(webPlayerResponse, playabilityStatus);
 
             // Fetching successfully the iOS player is mandatory to get streams
+            fetchIosMobileJsonPlayer(contentCountry, localization, videoId);
+
             try {
                 fetchAndroidMobileJsonPlayer(contentCountry, localization, videoId);
             } catch (final Exception ignored) {
                 // Ignore exceptions related to ANDROID client fetch or parsing, as it is not
                 // compulsory to play contents
             }
-            fetchIosMobileJsonPlayer(contentCountry, localization, videoId);
-
-
         }
 
         // The microformat JSON object of the content is only returned on the WEB client,
