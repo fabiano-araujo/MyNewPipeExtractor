@@ -805,9 +805,6 @@ public class YoutubeStreamExtractor extends StreamExtractor {
     private static final String CAPTIONS = "captions";
     private static final String PLAYABILITY_STATUS = "playabilityStatus";
     public static boolean runNextResponse = false;
-    public static boolean myFetchIosClient = false;
-    public static boolean fetchAndroidClient = true;
-    public static boolean fetchHtml5Client = false;
 
     @Override
     public void onFetchPage(@Nonnull final Downloader downloader)
@@ -820,24 +817,23 @@ public class YoutubeStreamExtractor extends StreamExtractor {
         final PoTokenProvider poTokenproviderInstance = poTokenProvider;
         final boolean noPoTokenProviderSet = poTokenproviderInstance == null;
 
-        if (fetchHtml5Client) {
-            fetchHtml5Client(localization, contentCountry, videoId, poTokenproviderInstance,
-                    noPoTokenProviderSet);
-        }
+        fetchHtml5Client(localization, contentCountry, videoId, poTokenproviderInstance,
+                noPoTokenProviderSet);
 
         setStreamType();
 
         final PoTokenResult androidPoTokenResult = noPoTokenProviderSet ? null
                 : poTokenproviderInstance.getAndroidClientPoToken(videoId);
-
-        if (fetchAndroidClient) {
+        if (html5StreamingData == null) {
             fetchAndroidClient(localization, contentCountry, videoId, androidPoTokenResult);
-        }
 
-        if (myFetchIosClient) {
-            final PoTokenResult iosPoTokenResult = noPoTokenProviderSet ? null
-                    : poTokenproviderInstance.getIosClientPoToken(videoId);
-            fetchIosClient(localization, contentCountry, videoId, iosPoTokenResult);
+            if (androidStreamingData == null) {
+                if (fetchIosClient) {
+                    final PoTokenResult iosPoTokenResult = noPoTokenProviderSet ? null
+                            : poTokenproviderInstance.getIosClientPoToken(videoId);
+                    fetchIosClient(localization, contentCountry, videoId, iosPoTokenResult);
+                }
+            }
         }
 
         if (runNextResponse) {
