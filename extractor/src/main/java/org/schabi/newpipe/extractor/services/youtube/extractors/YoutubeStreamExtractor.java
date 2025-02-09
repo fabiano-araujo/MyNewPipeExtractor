@@ -804,6 +804,7 @@ public class YoutubeStreamExtractor extends StreamExtractor {
             = "playerCaptionsTracklistRenderer";
     private static final String CAPTIONS = "captions";
     private static final String PLAYABILITY_STATUS = "playabilityStatus";
+    public static boolean runNextResponse = false;
 
     @Override
     public void onFetchPage(@Nonnull final Downloader downloader)
@@ -832,14 +833,16 @@ public class YoutubeStreamExtractor extends StreamExtractor {
             fetchIosClient(localization, contentCountry, videoId, iosPoTokenResult);
         }
 
-        final byte[] nextBody = JsonWriter.string(
-                prepareDesktopJsonBuilder(localization, contentCountry)
-                        .value(VIDEO_ID, videoId)
-                        .value(CONTENT_CHECK_OK, true)
-                        .value(RACY_CHECK_OK, true)
-                        .done())
-                .getBytes(StandardCharsets.UTF_8);
-        nextResponse = getJsonPostResponse(NEXT, nextBody, localization);
+        if (runNextResponse) {
+            final byte[] nextBody = JsonWriter.string(
+                            prepareDesktopJsonBuilder(localization, contentCountry)
+                                    .value(VIDEO_ID, videoId)
+                                    .value(CONTENT_CHECK_OK, true)
+                                    .value(RACY_CHECK_OK, true)
+                                    .done())
+                    .getBytes(StandardCharsets.UTF_8);
+            nextResponse = getJsonPostResponse(NEXT, nextBody, localization);
+        }
     }
 
     private static void checkPlayabilityStatus(@Nonnull final JsonObject playabilityStatus)

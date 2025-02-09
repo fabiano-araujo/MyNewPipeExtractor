@@ -1,0 +1,443 @@
+[33mcommit 9f83b385a4d080edcd652373b0d48b3f43fc9146[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mdev[m[33m, [m[1;33mtag: [m[1;33mv0.24.5[m[33m, [m[1;31morigin/master[m[33m, [m[1;31morigin/dev[m[33m, [m[1;31morigin/HEAD[m[33m)[m
+Author: Stypox <stypox@pm.me>
+Date:   Wed Feb 5 10:05:59 2025 +0100
+
+    Release v0.24.5
+
+[33mcommit fe168aba0be83e5bcf229ae83af5931cb98bd60b[m
+Merge: 186e32c9 96911ae2
+Author: Stypox <stypox@pm.me>
+Date:   Wed Feb 5 10:02:51 2025 +0100
+
+    Merge pull request #1272 from AudricV/yt_clients_changes_and_potokens_support
+    
+    [YouTube] Refactor player clients, add support for poTokens, extract visitor data from the service and more
+
+[33mcommit 96911ae2a48b619704303353fbf6f407f8ba2831[m
+Author: AudricV <74829229+AudricV@users.noreply.github.com>
+Date:   Fri Jan 31 21:46:40 2025 +0100
+
+    [YouTube] Fix usage of WEB client headers for all HTML5 URLs in DASH creators
+    
+    Also use TVHTML5 user agent for requests from this client in these
+    DASH manifests creators.
+
+[33mcommit c48d44985324c4669a11ce898acb71b66643cc0c[m
+Author: AudricV <74829229+AudricV@users.noreply.github.com>
+Date:   Fri Jan 31 21:43:51 2025 +0100
+
+    [YouTube] Add ability to get TVHTML5 user agent used
+    
+    Also make YoutubeParsingHelper.getOriginReferrerHeaders public, in
+    order to be used by other extractor classes and improve the name of a
+    parameter of YoutubeParsingHelper.getVisitorDataFromInnertube.
+
+[33mcommit 0952431121f49a97c3ad289971e12ccf44410501[m
+Author: AudricV <74829229+AudricV@users.noreply.github.com>
+Date:   Fri Jan 31 21:38:31 2025 +0100
+
+    [YouTube] Move InnertubeClientRequestInfo creations in class' methods
+    
+    This commits provides methods to get InnertubeClientRequestInfo
+    instances, which can be used by extractor clients to get visitor data
+    to pass to PoTokenProvider implementations using YoutubeParsingHelper.
+    
+    Ability to create custom instances has been removed, but returned
+    objects can be modified. This is what YoutubeStreamHelper now uses to
+    set the visitorData property.
+
+[33mcommit 4644e1744b336f5bc8c3400351d2344c94346fa8[m
+Author: AudricV <74829229+AudricV@users.noreply.github.com>
+Date:   Fri Jan 31 21:26:41 2025 +0100
+
+    [YouTube] Add signatureTimestamp argument to TVHTML5 client requests
+    
+    This argument, which has been forgot, is required to get valid
+    streaming URLs with this client.
+
+[33mcommit 61f67854ed3801de967b8cbe5790e688e685da42[m
+Author: AudricV <74829229+AudricV@users.noreply.github.com>
+Date:   Fri Jan 31 11:25:02 2025 +0100
+
+    [YouTube] Get visitorData for player requests if not provided and do some fixes
+    
+    visitorData are get using InnertubeClientRequestInfo and
+    YoutubeParsingHelper.prepareJsonBuilder, which is replacing the
+    corresponding method in YoutubeStreamHelper, removed in this commit.
+    
+    Also fix some bugs like JsonBuilder usages in some places and remove
+    HLS manifest filtering for the iOS client, as we still use for now
+    the full player response, in the case having streams requiring poTokens
+    after some time as a last resort is useful.
+
+[33mcommit d08331dbcfc70039a67d8765898d2fc5f5107252[m
+Author: AudricV <74829229+AudricV@users.noreply.github.com>
+Date:   Fri Jan 31 11:23:58 2025 +0100
+
+    [YouTube] Add ability to use the guide endpoint to get a visitorData
+    
+    Some clients like TVHTML5 are not allowed on the visitor_id endpoint
+    (with this client, a 400 HTTP response is returned with a precondition
+    check failed error).
+    
+    Also disable pretty printing for these requests, like we do for others.
+
+[33mcommit 862a607fc6da1611be86474c41faef29d15c973a[m
+Author: AudricV <74829229+AudricV@users.noreply.github.com>
+Date:   Fri Jan 31 10:51:51 2025 +0100
+
+    [YouTube] Add IOS and ANDROID client IDs in ClientsConstants
+
+[33mcommit 6533a333fa840d25f56d3ed4670cbe0f322ef033[m
+Author: AudricV <74829229+AudricV@users.noreply.github.com>
+Date:   Fri Jan 31 10:51:07 2025 +0100
+
+    [YouTube] Add ability to get a visitorData from InnerTube
+
+[33mcommit 9e45c8001abe549dd59271b07101e6110c620249[m
+Author: AudricV <74829229+AudricV@users.noreply.github.com>
+Date:   Fri Jan 31 10:48:13 2025 +0100
+
+    [YouTube] Do not send a visitorData for every InnerTube request
+    
+    As YouTube is disabling ability to use a random visitor ID in a
+    visitorData on player requests and BotGuard challenges, it
+    shouldn't matter if we use a random one or not for other
+    request types.
+
+[33mcommit 94541d2d94f17dbc540e172f89749eb9eefd7112[m
+Author: AudricV <74829229+AudricV@users.noreply.github.com>
+Date:   Fri Jan 31 10:30:56 2025 +0100
+
+    [YouTube] Add utility data class to store client and device info
+    
+    This new class, InnertubeClientRequestInfo, composed of two mutable
+    subclasses, ClientInfo and DeviceInfo, allows to store client and
+    device info in a better way, without requiring to pass more than 10
+    method parameters like in YoutubeStreamHelper currently.
+    
+    Mutability has been added in order to allow changing some fields
+    easily, especially visitorData.
+
+[33mcommit 9333d7fcdc85e318f4368a6b932b8052d2a8a1ed[m
+Author: AudricV <74829229+AudricV@users.noreply.github.com>
+Date:   Thu Jan 30 20:17:31 2025 +0100
+
+    [YouTube] Update DASH manifest creation clients' handling
+    
+    - Use POST requests with the same body as official clients do;
+    - Update methods checking the client streaming URLs come from:
+      - Replace TVHTML5_SIMPLY_EMBEDDED_PLAYER by TVHTML5;
+      - Add WEB_EMBEDDED_PLAYER.
+
+[33mcommit 38e2b67cb7c08fb1b517d5811e164735e10680b6[m
+Author: AudricV <74829229+AudricV@users.noreply.github.com>
+Date:   Tue Jan 28 21:44:50 2025 +0100
+
+    [YouTube] Remove unused methods and constants in YoutubeParsingHelper
+
+[33mcommit 3878696b2c4e419a3809e23e28b250d487ab71db[m
+Author: AudricV <74829229+AudricV@users.noreply.github.com>
+Date:   Tue Jan 28 21:44:14 2025 +0100
+
+    [YouTube] Add support for poTokens, refactor player clients' fetching
+    
+    Also improve detection of age-restricted statuses in playability error
+    messages returned by the service and provide version 7 of DASH
+    manifests.
+
+[33mcommit 9d2b840cfb1ed4b21a41676d271d5a3a0cbed31e[m
+Author: AudricV <74829229+AudricV@users.noreply.github.com>
+Date:   Tue Jan 28 21:18:58 2025 +0100
+
+    [YouTube] Add utility class to handle player requests fetching
+    
+    This internal class, YoutubeStreamHelper, has to be public in order to
+    be used by subpackages of the service's root one.
+    
+    It supports poTokens, HTML5 signatureTimestamp property, embed context
+    and multiple InnerTube clients. It is meant to replace the
+    corresponding methods in YoutubeParsingHelper, in order to reduce the
+    class' size, code duplicates and improve its readability.
+    
+    It adds a new way to get age-restricted videos' streams, the only ones
+    which are playable in YouTube embeds, which is not very common.
+
+[33mcommit 1df0267440f9b307c46c0fff1a11baccdf25603c[m
+Author: AudricV <74829229+AudricV@users.noreply.github.com>
+Date:   Tue Jan 28 21:07:37 2025 +0100
+
+    [YouTube] Make client and origin HTTP headers methods package-private
+    
+    This allows their internal usage in an upcoming new class to be used on
+    other InnerTube clients than the WEB one.
+
+[33mcommit 3691fc22c62667d007c0eb48ea06f44aa7754b42[m
+Author: AudricV <74829229+AudricV@users.noreply.github.com>
+Date:   Tue Jan 28 20:45:54 2025 +0100
+
+    [YouTube] Add an interface and a class to fetch and provide poTokens
+
+[33mcommit fd82ec585b79142681b06cb93754dc979aa1bbb8[m
+Author: AudricV <74829229+AudricV@users.noreply.github.com>
+Date:   Tue Jan 28 20:16:13 2025 +0100
+
+    [YouTube] Move to their own file and update clients' constants
+    
+    Also update client version and device info and add TVHTML5 client and
+    WEB_EMBEDDED_PLAYER constants, these will be used in the future.
+    
+    TVHTML5_SIMPLY_EMBED_CLIENT_VERSION has been kept in its place as
+    the corresponding client does not work anonymously anymore, so it will
+    be removed soon.
+
+[33mcommit 186e32c9dbf18061582118fddc3b33ed02828a07[m
+Merge: 3a33cefb a336a8ca
+Author: Stypox <stypox@pm.me>
+Date:   Mon Feb 3 20:35:20 2025 +0100
+
+    Merge pull request #1269 from AudricV/snd_no_drm_streams
+    
+    [Soundcloud] Remove DRM-protected and downloadable formats extraction
+
+[33mcommit a336a8ca97ba4b1e3e63faf80fb9f398b404459c[m
+Author: AudricV <74829229+AudricV@users.noreply.github.com>
+Date:   Sun Jan 19 00:14:53 2025 +0100
+
+    [Soundcloud] Update SoundcloudStreamExtractorTest with latest changes
+
+[33mcommit 7607688cb0a90967e6faf05cbeb6e19b16411494[m
+Author: AudricV <74829229+AudricV@users.noreply.github.com>
+Date:   Sun Jan 19 00:08:26 2025 +0100
+
+    [Soundcloud] Remove DRM-protected and downloadable formats extraction
+    
+    DRM-protected streams have been added to some tracks, mostly from
+    major music companies. We do not support DRM streams in the extractor,
+    so they shouldn't be extracted and so waste time, energy and resources.
+    
+    Extracting downloadable format requires login for a pretty long time,
+    so there is no point again to do requests to extract this stream to get
+    an unauthorized response.
+    
+    Also send the track_authorization property returned in the track info,
+    like the website does and allow duplicate MP3 formats in progressive and
+    HLS delivery methods to be returned.
+
+[33mcommit 3a33cefbc014a820056d83076914544f29b82644[m
+Merge: d5ade940 222d869e
+Author: litetex <40789489+litetex@users.noreply.github.com>
+Date:   Mon Jan 27 22:35:03 2025 +0100
+
+    Merge pull request #1246 from Isira-Seneviratne/BufferedReader-lines
+    
+    Use BufferedReader#lines()
+
+[33mcommit 222d869efcaea49eb5455cac23a2d93ec8550008[m
+Author: litetex <40789489+litetex@users.noreply.github.com>
+Date:   Mon Jan 27 22:32:01 2025 +0100
+
+    Polish: Use ternary instead of if
+
+[33mcommit 625e9f96d21ff4e0777840931560df8a745e8f45[m
+Author: litetex <40789489+litetex@users.noreply.github.com>
+Date:   Mon Jan 27 22:24:15 2025 +0100
+
+    Remove public modifier from tests
+
+[33mcommit e475b2971b283d0da3ca519f57a0b4368f3f9789[m
+Author: Isira Seneviratne <isirasen96@gmail.com>
+Date:   Sat Dec 7 11:15:01 2024 +0530
+
+    Restore URL check
+
+[33mcommit 0352659e2b0b3113538e710226dc95faaeea004f[m
+Author: Isira Seneviratne <isirasen96@gmail.com>
+Date:   Fri Nov 29 05:16:08 2024 +0530
+
+    Use BufferedReader#lines()
+
+[33mcommit d5ade940fc8d9b62c7edfe9d3579a26ae13fc6d3[m
+Merge: f7adeeff 4b16b7ee
+Author: litetex <40789489+litetex@users.noreply.github.com>
+Date:   Mon Jan 27 22:17:53 2025 +0100
+
+    Merge pull request #1265 from gechoto/update-ios-client
+    
+    [YouTube] Update IOS client
+
+[33mcommit f7adeeff902a17f1b55bbd59a27e8115cb0126c8[m
+Author: Stypox <stypox@pm.me>
+Date:   Sun Jan 26 16:09:22 2025 +0100
+
+    Fix checkstyle
+
+[33mcommit 1ca8275419ff0ae9cf1dc44c651ae0e968c2954c[m
+Merge: e0359ab8 b74a8d0d
+Author: Stypox <stypox@pm.me>
+Date:   Sun Jan 26 15:15:00 2025 +0100
+
+    Merge pull request #1253 from gechoto/fix-n-func
+    
+    [YouTube] Fixes for n param deobfuscation function
+
+[33mcommit 4b16b7ee41cc5444e092bdce7131849281af8f25[m
+Author: gechoto <124326167+gechoto@users.noreply.github.com>
+Date:   Sun Jan 26 13:47:30 2025 +0000
+
+    YoutubeParsingHelper: update IOS client
+
+[33mcommit b74a8d0df811d12699a475035783f172dca9e3af[m
+Author: Stypox <stypox@pm.me>
+Date:   Sun Jan 26 12:57:31 2025 +0100
+
+    Remove manually writing cardinals of regexes
+
+[33mcommit 2b70b5f737536ecac27488e233ade4d8d851e0f8[m
+Author: Stypox <stypox@pm.me>
+Date:   Sun Jan 26 12:55:07 2025 +0100
+
+    Improve new regex to account for more context
+
+[33mcommit ca9f1935d3ab985d866006f55bbdf0c09d08a3d0[m
+Author: gechoto <124326167+gechoto@users.noreply.github.com>
+Date:   Mon Jan 6 21:44:16 2025 +0000
+
+    YoutubeThrottlingParameterUtils: make third regex longer to ensure it is a function which takes one parameter
+
+[33mcommit c7d598869cdcd124acddff5b9b2e0abf204c514c[m
+Author: gechoto <124326167+gechoto@users.noreply.github.com>
+Date:   Mon Jan 6 21:32:05 2025 +0000
+
+    YoutubeThrottlingParameterUtils: swap regex positions again
+
+[33mcommit 14f7ef1093ece92d81f8f7aed75de9ce90e9086d[m
+Author: gechoto <124326167+gechoto@users.noreply.github.com>
+Date:   Sun Jan 5 20:39:53 2025 +0000
+
+    YoutubeThrottlingParameterUtils: add back second regex and swap it with the third one
+
+[33mcommit d007e368f3030118ce5c57518a5e5038c6828bfe[m
+Author: gechoto <124326167+gechoto@users.noreply.github.com>
+Date:   Tue Dec 31 16:54:57 2024 +0100
+
+    don't commit testing code kids
+
+[33mcommit 4181625c2cfd41be6e3260a2f476df0f0930888f[m
+Author: gechoto <124326167+gechoto@users.noreply.github.com>
+Date:   Tue Dec 31 16:50:14 2024 +0100
+
+    add comment to throttling parameter deobfuscation function fixup
+
+[33mcommit e0d39b606c1d489208eca329610dc967076f80b8[m
+Author: gechoto <124326167+gechoto@users.noreply.github.com>
+Date:   Tue Dec 31 16:31:23 2024 +0100
+
+    correct comment
+
+[33mcommit 1393644f444b850fe629bbfdf0ea21d6121311cc[m
+Author: gechoto <124326167+gechoto@users.noreply.github.com>
+Date:   Sun Dec 29 17:33:35 2024 +0100
+
+    formatting again
+
+[33mcommit 68465b27fe9a8b00ed0ccb370ec701056747fffc[m
+Author: gechoto <124326167+gechoto@users.noreply.github.com>
+Date:   Sun Dec 29 13:49:51 2024 +0100
+
+    fix formatting
+
+[33mcommit 56595bd9d5cb3a326d499269f9a6e346dda3877b[m
+Author: gechoto <124326167+gechoto@users.noreply.github.com>
+Date:   Sun Dec 29 01:33:58 2024 +0100
+
+    [YouTube] Fix extraction of n param deobfuscation function name and fixup function to prevent early return
+
+[33mcommit e0359ab872b9892164afeed6ea8c7648ebf02133[m
+Merge: ea401638 1c45d4e2
+Author: Stypox <stypox@pm.me>
+Date:   Sun Jan 26 12:31:40 2025 +0100
+
+    Merge pull request #1263 from litetex/followup-1262
+    
+    Partial followup for #1262
+
+[33mcommit 1c45d4e24044a86f0d5ab629d36c9fa1be07d1c5[m
+Author: litetex <40789489+litetex@users.noreply.github.com>
+Date:   Thu Jan 23 20:41:15 2025 +0100
+
+    Fix incorrect iPhone model
+
+[33mcommit cca3e3ffc0e8fde33db28b2b9c19fa088c83458b[m
+Author: litetex <40789489+litetex@users.noreply.github.com>
+Date:   Thu Jan 23 20:37:46 2025 +0100
+
+    Use more specific exception
+
+[33mcommit ea401638f4317041ea87916fd9d8a4e6eef5cfff[m
+Merge: 485a77d8 a346f767
+Author: litetex <40789489+litetex@users.noreply.github.com>
+Date:   Thu Jan 23 21:56:50 2025 +0100
+
+    Merge pull request #1249 from TeamNewPipe/dependabot/gradle/org.junit-junit-bom-5.11.4
+    
+    Bump org.junit:junit-bom from 5.11.3 to 5.11.4
+
+[33mcommit 485a77d885a7af23aff91c65dbb3abff9acfb0a4[m
+Merge: a7154c30 17f0b0d7
+Author: litetex <40789489+litetex@users.noreply.github.com>
+Date:   Thu Jan 23 21:54:55 2025 +0100
+
+    Merge pull request #1212 from Isira-Seneviratne/TimeAgoParser-unused
+    
+    Remove unused method in TimeAgoParser
+
+[33mcommit 17f0b0d7d360a091ef1e10c547fd154f5f39af0f[m
+Author: litetex <40789489+litetex@users.noreply.github.com>
+Date:   Thu Jan 23 20:37:22 2025 +0100
+
+    Fix checkstyle
+
+[33mcommit 746b36e80d112444dcdfa0fdfbd93d15e7a8dcae[m
+Author: litetex <40789489+litetex@users.noreply.github.com>
+Date:   Thu Jan 23 21:48:29 2025 +0100
+
+    Improve tests
+    
+    * Dedup using parameterized tests
+    * Make ``now`` controllable
+
+[33mcommit ae07ba3c7298ef64df14f2b1e7ef9a1d5c27dcb0[m
+Author: Isira Seneviratne <isirasen96@gmail.com>
+Date:   Mon Aug 19 11:38:07 2024 +0530
+
+    Remove unused method in TimeAgoParser
+
+[33mcommit a7154c3087e5e7228cba22fb8f71e9af282bce4d[m[33m ([m[1;33mtag: [m[1;33mv0.24.4[m[33m)[m
+Author: Stypox <stypox@pm.me>
+Date:   Tue Jan 21 23:14:31 2025 +0100
+
+    Release v0.24.4
+
+[33mcommit 4c720328aeef5e2f04e9dd287665487c2c05d96b[m
+Merge: 8e92227b 936bf2d7
+Author: Stypox <stypox@pm.me>
+Date:   Tue Jan 21 23:12:58 2025 +0100
+
+    Merge pull request #1262 from Theta-Dev/fix/ios-client-vdata
+    
+    [YouTube] update iOS client, add visitor data to requests
+
+[33mcommit 936bf2d71beaeee30afcab1210bc27c475328328[m
+Author: ThetaDev <thetadev@magenta.de>
+Date:   Tue Jan 21 23:09:40 2025 +0100
+
+    Update extractor/src/main/java/org/schabi/newpipe/extractor/services/youtube/YoutubeParsingHelper.java
+    
+    Co-authored-by: Stypox <stypox@pm.me>
+
+[33mcommit 5b31ff20e524ae8f1fced13b6a1bb361f99adc02[m
+Author: Stypox <stypox@pm.me>
+Date:   Tue Jan 21 23:09:00 2025 +0100
+
+    iPhone 15 Pro Max instead of 16 in comments
